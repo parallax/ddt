@@ -17,6 +17,8 @@ var DDT = (function () {
 
             _this.$currentRow.removeClass(DDT.DDTNotVisibleClass);
             _this.$currentRow = null;
+
+            _this.diff = null;
         };
         this.$element = $(this.element);
 
@@ -32,25 +34,34 @@ var DDT = (function () {
     DDT.prototype.startDrag = function (row, position) {
         $(document).one('mouseup', this.endDrag).on('mousemove', this.mousemove);
 
-        $('body').addClass(DDT.NoSelectClass);
+        var $currentRow = this.$currentRow = $(row);
+        var offset = this.$currentRow.offset();
+        var computed = window.getComputedStyle(row);
+        var spacing = computed['border-spacing'].split(' ').map(function (n) {
+            return parseInt(n, 10);
+        });
 
-        this.$currentRow = $(row);
+        this.diff = {
+            top: position.top - offset.top + spacing[1],
+            left: position.left - offset.left
+        };
 
-        var clone = DDT.cloneElement(row);
+        var clone = DDT.cloneElement(row, computed);
 
         this.$clone = $(clone);
         this.$clone.addClass(DDT.CloneElementClass);
         this.$clone.appendTo('body');
 
-        this.$currentRow.addClass(DDT.DDTNotVisibleClass);
-
         this.updateClonePosition(position);
+
+        this.$currentRow.addClass(DDT.DDTNotVisibleClass);
+        $('body').addClass(DDT.NoSelectClass);
     };
 
     DDT.prototype.updateClonePosition = function (position) {
         this.$clone.css({
-            top: position.top + 'px',
-            left: position.left + 'px'
+            top: position.top - this.diff.top + 'px',
+            left: position.left - this.diff.left + 'px'
         });
     };
 
@@ -61,17 +72,24 @@ var DDT = (function () {
         };
     };
 
-    DDT.cloneElement = function (element) {
+    DDT.cloneElement = function (element, computed) {
+        if (typeof computed === "undefined") { computed = null; }
+        var table = document.createElement('table');
         var clone = document.createElement(element.tagName);
 
+        if (!computed) {
+            computed = window.getComputedStyle(element);
+        }
+
         clone.innerHTML = element.innerHTML;
+        clone.setAttribute('style', computed.cssText);
 
-        clone.setAttribute('style', window.getComputedStyle(element).cssText);
+        table.appendChild(clone);
 
-        return clone;
+        return table;
     };
 
-    DDT.defineCSSClass = function (className, rules) {
+    DDT.defineCSSSelector = function (selectorName, rules) {
         var style = document.createElement('style');
 
         style.appendChild(document.createTextNode(''));
@@ -85,7 +103,11 @@ var DDT = (function () {
             css += pair[0] + ':' + pair[1] + ';';
         });
 
-        sheet.addRule('.' + className, css, 0);
+        sheet.addRule(selectorName, css, 0);
+    };
+
+    DDT.defineCSSClass = function (className, rules) {
+        return DDT.defineCSSSelector('.' + className, rules);
     };
     DDT.DDTNotVisibleClass = 'DDTNotVisible';
     DDT.CloneElementClass = 'DDTCloneElementClass';
@@ -93,6 +115,13 @@ var DDT = (function () {
     return DDT;
 })();
 
+console.log('.' + DDT.NoSelectClass, '.' + DDT.NoSelectClass + ' *');
 DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility: 'hidden' });
 DDT.defineCSSClass(DDT.CloneElementClass, { position: 'absolute !important' });
-DDT.defineCSSClass(DDT.NoSelectClass, { '-webkit-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none', 'cursor': 'default' });
+DDT.defineCSSSelector('.' + DDT.NoSelectClass + ', .' + DDT.NoSelectClass + ' *', {
+    '-webkit-user-select': 'none',
+    '-ms-user-select': 'none',
+    '-o-user-select': 'none',
+    'user-select': 'none',
+    'cursor': 'default'
+});

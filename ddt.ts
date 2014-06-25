@@ -21,7 +21,9 @@ class DDT {
     private $clone      : JQuery;
     private $currentRow : JQuery;
 
-    private initialPosition : DDTPosition;
+    private diff : DDTPosition;
+
+    private borderSpacing : DDTPosition;
 
     static DDTNotVisibleClass = 'DDTNotVisible';
     static CloneElementClass = 'DDTCloneElementClass';
@@ -42,25 +44,32 @@ class DDT {
             .one('mouseup',   this.endDrag)
             .on('mousemove', this.mousemove);
 
-        $('body').addClass(DDT.NoSelectClass);
+        var $currentRow = this.$currentRow = $(row);
+        var offset = this.$currentRow.offset();
+        var computed = window.getComputedStyle(row);
+        var spacing = computed['border-spacing'].split(' ').map(n => parseInt(n, 10));
 
-        this.$currentRow = $(row);
+        this.diff = {
+            top  : position.top - offset.top + spacing[1],
+            left : position.left - offset.left
+        };
 
-        var clone = DDT.cloneElement(row);
+        var clone = DDT.cloneElement(row, computed);
 
         this.$clone = $(clone);
         this.$clone.addClass(DDT.CloneElementClass);
         this.$clone.appendTo('body');
 
-        this.$currentRow.addClass(DDT.DDTNotVisibleClass);
-
         this.updateClonePosition(position);
+
+        this.$currentRow.addClass(DDT.DDTNotVisibleClass);
+        $('body').addClass(DDT.NoSelectClass);
     }
 
     updateClonePosition(position : DDTPosition) {
         this.$clone.css({
-            top : position.top + 'px',
-            left : position.left + 'px'
+            top : position.top   - this.diff.top  + 'px',
+            left : position.left - this.diff.left + 'px'
         });
     }
 
@@ -77,6 +86,8 @@ class DDT {
 
         this.$currentRow.removeClass(DDT.DDTNotVisibleClass);
         this.$currentRow = null;
+
+        this.diff = null;
     };
 
     private static eventToPosition(e : Event) : DDTPosition {
@@ -86,17 +97,23 @@ class DDT {
         };
     }
 
-    private static cloneElement(element : HTMLElement) : Element {
-        var clone = document.createElement(element.tagName);
+    private static cloneElement(element : HTMLElement, computed : CSSStyleDeclaration = null) : Element {
+        var table       = document.createElement('table');
+        var clone       = document.createElement(element.tagName);
+        
+        if (!computed) {
+            computed = window.getComputedStyle(element);
+        }
 
         clone.innerHTML = element.innerHTML;
+        clone.setAttribute('style', computed.cssText);
 
-        clone.setAttribute('style', window.getComputedStyle(element).cssText);
+        table.appendChild(clone);
 
-        return clone;
+        return table;
     }
 
-    static defineCSSClass(className : string, rules : Object) {
+    static defineCSSSelector(selectorName : string, rules : Object) {
         var style = document.createElement('style');
 
         style.appendChild(document.createTextNode(''));
@@ -112,7 +129,11 @@ class DDT {
                 css += pair[0] + ':' + pair[1] + ';';
             });
 
-        sheet.addRule('.' + className, css, 0);
+        sheet.addRule(selectorName, css, 0);
+    }
+
+    static defineCSSClass(className : string, rules : Object) {
+        return DDT.defineCSSSelector('.' + className, rules);
     }
 
 //    private static getElementStyles(element : Element) : CSSStyleRule[] {
@@ -168,6 +189,14 @@ class DDT {
 //    }
 }
 
+console.log('.' + DDT.NoSelectClass, '.' + DDT.NoSelectClass + ' *');
 DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility : 'hidden'});
 DDT.defineCSSClass(DDT.CloneElementClass, { position : 'absolute !important' })
-DDT.defineCSSClass(DDT.NoSelectClass, { '-webkit-user-select' : 'none', '-ms-user-select' : 'none', '-o-user-select' : 'none', 'user-select' : 'none', 'cursor' : 'default' });
+DDT.defineCSSSelector('.' + DDT.NoSelectClass + ', .' + DDT.NoSelectClass + ' *', {
+    '-webkit-user-select' : 'none',
+    '-ms-user-select'     : 'none',
+    '-o-user-select'      : 'none',
+    'user-select'         : 'none',
+
+    'cursor'              : 'default'
+});
