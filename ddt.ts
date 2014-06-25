@@ -189,7 +189,6 @@ class DDT {
 //    }
 }
 
-console.log('.' + DDT.NoSelectClass, '.' + DDT.NoSelectClass + ' *');
 DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility : 'hidden'});
 DDT.defineCSSClass(DDT.CloneElementClass, { position : 'absolute !important' })
 DDT.defineCSSSelector('.' + DDT.NoSelectClass + ', .' + DDT.NoSelectClass + ' *', {
