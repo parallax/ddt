@@ -6,7 +6,18 @@ var DDT = (function () {
         var _this = this;
         this.element = element;
         this.mousemove = function (e) {
-            _this.updateClonePosition(DDT.eventToPosition(e));
+            var pos = DDT.eventToPosition(e);
+            _this.updateClonePosition(pos);
+
+            var tablePosition = _this.$element.offset();
+
+            _this.$element.find('tr').each(function (i, row) {
+                if (pos.top < $(row).position().top) {
+                    $(row).before(_this.$currentRow);
+                }
+
+                console.log($(row).position().top, pos.top);
+            });
         };
         this.endDrag = function () {
             $(document).off('mousemove', _this.mousemove);
