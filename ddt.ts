@@ -74,7 +74,19 @@ class DDT {
     }
 
     mousemove = (e) => {
-        this.updateClonePosition(DDT.eventToPosition(e));
+        var pos = DDT.eventToPosition(e);
+        this.updateClonePosition(pos);
+
+        var tablePosition = this.$element.offset();
+
+        this.$element.find('tr').each((i, row) => {
+
+            if (pos.top < $(row).position().top) {
+                $(row).before(this.$currentRow)
+            }
+
+            console.log($(row).position().top, pos.top);
+        });
     }
 
     endDrag = ()  => {
