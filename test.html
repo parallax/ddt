@@ -10,12 +10,16 @@
             font-family: sans-serif;
         }
 
+        table {
+            border-spacing: 0;
+        }
+
         tr {
-            background: #fafafa;
+            background: red;
         }
 
         tr:nth-child(2n) {
-            background: #eee;
+            background: blue;
         }
 
         td {
@@ -40,10 +44,30 @@
         <td>2</td>
         <td>3</td>
     </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
 </table>
 <script src="./ddt.js"></script>
 <script>
-    new DDT(document.querySelector('table'));
+    window.ddt = new DDT(document.querySelector('table'));
 </script>
 </body>
 </html>
