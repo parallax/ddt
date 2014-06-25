@@ -26,7 +26,7 @@
       <file leaf-file-name="ddt.ts" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ddt.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-0.51395005" vertical-offset="1175" max-vertical-offset="4275">
+            <state vertical-scroll-proportion="0.34875184" vertical-offset="0" max-vertical-offset="4475">
               <caret line="19" column="33" selection-start-line="19" selection-start-column="33" selection-end-line="19" selection-end-column="33" />
               <folding />
             </state>
@@ -46,12 +46,11 @@
       <file leaf-file-name="ddt.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ddt.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="1288" max-vertical-offset="2425">
-              <caret line="83" column="0" selection-start-line="83" selection-start-column="0" selection-end-line="83" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="1663" max-vertical-offset="2600">
+              <caret line="98" column="0" selection-start-line="98" selection-start-column="0" selection-end-line="98" selection-end-column="0" />
               <folding>
-                <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-                <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-                <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+                <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+                <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
               </folding>
             </state>
           </provider>
@@ -294,12 +293,12 @@
       <workItem from="1403709370411" duration="1853000" />
       <workItem from="1403711817184" duration="1671000" />
       <workItem from="1403713638706" duration="1807000" />
-      <workItem from="1403715464213" duration="843000" />
+      <workItem from="1403715464213" duration="1634000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="6174000" />
+    <option name="totallyTimeSpent" value="6965000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="2560" height="1440" extended-state="0" />
@@ -384,9 +383,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="1625" max-vertical-offset="1925">
           <caret line="65" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -412,9 +410,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="950" max-vertical-offset="2350">
           <caret line="38" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -455,9 +452,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="100" max-vertical-offset="1850">
           <caret line="4" column="25" selection-start-line="0" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -490,9 +486,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="75" max-vertical-offset="1025">
           <caret line="27" column="0" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -517,9 +512,8 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="495" max-vertical-offset="1325">
           <caret line="41" column="27" selection-start-line="0" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -555,12 +549,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ddt.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1288" max-vertical-offset="2425">
-          <caret line="83" column="0" selection-start-line="83" selection-start-column="0" selection-end-line="83" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="1663" max-vertical-offset="2600">
+          <caret line="98" column="0" selection-start-line="98" selection-start-column="0" selection-end-line="98" selection-end-column="0" />
           <folding>
-            <marker date="1403716300000" expanded="true" signature="146:171" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="885:926" placeholder="{...}" />
-            <marker date="1403716300000" expanded="true" signature="1990:2055" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="146:171" placeholder="{...}" />
+            <marker date="1403717017000" expanded="true" signature="2096:2115" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -575,7 +568,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ddt.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.51395005" vertical-offset="1175" max-vertical-offset="4275">
+        <state vertical-scroll-proportion="0.34875184" vertical-offset="0" max-vertical-offset="4475">
           <caret line="19" column="33" selection-start-line="19" selection-start-column="33" selection-end-line="19" selection-end-column="33" />
           <folding />
         </state>

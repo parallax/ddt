@@ -6,10 +6,11 @@ var DDT = (function () {
         var _this = this;
         this.element = element;
         this.mousemove = function (e) {
-            return _this.updateClonePosition(DDT.eventToPosition(e));
+            _this.updateClonePosition(DDT.eventToPosition(e));
         };
         this.endDrag = function () {
             $(document).off('mousemove', _this.mousemove);
+            $('body').removeClass(DDT.NoSelectClass);
 
             _this.$clone.remove();
             _this.$clone = null;
@@ -31,21 +32,25 @@ var DDT = (function () {
     DDT.prototype.startDrag = function (row, position) {
         $(document).one('mouseup', this.endDrag).on('mousemove', this.mousemove);
 
+        $('body').addClass(DDT.NoSelectClass);
+
         this.$currentRow = $(row);
-        this.initialPosition = position;
 
         var clone = DDT.cloneElement(row);
 
         this.$clone = $(clone);
         this.$clone.addClass(DDT.CloneElementClass);
         this.$clone.appendTo('body');
+
         this.$currentRow.addClass(DDT.DDTNotVisibleClass);
+
+        this.updateClonePosition(position);
     };
 
     DDT.prototype.updateClonePosition = function (position) {
         this.$clone.css({
-            top: position.top,
-            left: position.left
+            top: position.top + 'px',
+            left: position.left + 'px'
         });
     };
 
@@ -84,8 +89,10 @@ var DDT = (function () {
     };
     DDT.DDTNotVisibleClass = 'DDTNotVisible';
     DDT.CloneElementClass = 'DDTCloneElementClass';
+    DDT.NoSelectClass = 'DDTNoSelectClass';
     return DDT;
 })();
 
 DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility: 'hidden' });
-DDT.defineCSSClass(DDT.CloneElementClass, { position: 'absolute' });
+DDT.defineCSSClass(DDT.CloneElementClass, { position: 'absolute !important' });
+DDT.defineCSSClass(DDT.NoSelectClass, { '-webkit-user-select': 'none', '-ms-user-select': 'none', '-o-user-select': 'none', 'user-select': 'none', 'cursor': 'default' });

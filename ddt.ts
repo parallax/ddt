@@ -25,6 +25,7 @@ class DDT {
 
     static DDTNotVisibleClass = 'DDTNotVisible';
     static CloneElementClass = 'DDTCloneElementClass';
+    static NoSelectClass = 'DDTNoSelectClass';
 
     constructor(private element : Element) {
         this.$element = $(this.element);
@@ -39,31 +40,37 @@ class DDT {
     startDrag(row : HTMLElement, position : DDTPosition) {
         $(document)
             .one('mouseup',   this.endDrag)
-            .on('mousemove', this.mousemove)
+            .on('mousemove', this.mousemove);
+
+        $('body').addClass(DDT.NoSelectClass);
 
         this.$currentRow = $(row);
-        this.initialPosition = position;
-
 
         var clone = DDT.cloneElement(row);
 
         this.$clone = $(clone);
         this.$clone.addClass(DDT.CloneElementClass);
         this.$clone.appendTo('body');
+
         this.$currentRow.addClass(DDT.DDTNotVisibleClass);
+
+        this.updateClonePosition(position);
     }
 
     updateClonePosition(position : DDTPosition) {
         this.$clone.css({
-            top : position.top,
-            left : position.left
+            top : position.top + 'px',
+            left : position.left + 'px'
         });
     }
 
-    mousemove = (e) => this.updateClonePosition(DDT.eventToPosition(e));
+    mousemove = (e) => {
+        this.updateClonePosition(DDT.eventToPosition(e));
+    }
 
     endDrag = ()  => {
         $(document).off('mousemove', this.mousemove);
+        $('body').removeClass(DDT.NoSelectClass);
 
         this.$clone.remove();
         this.$clone = null;
@@ -162,4 +169,5 @@ class DDT {
 }
 
 DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility : 'hidden'});
-DDT.defineCSSClass(DDT.CloneElementClass, { position : 'absolute' })
+DDT.defineCSSClass(DDT.CloneElementClass, { position : 'absolute !important' })
+DDT.defineCSSClass(DDT.NoSelectClass, { '-webkit-user-select' : 'none', '-ms-user-select' : 'none', '-o-user-select' : 'none', 'user-select' : 'none', 'cursor' : 'default' });
