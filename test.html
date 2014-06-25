@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="http://code.jquery.com/jquery-git2.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <meta charset="utf-8">
+
+    <style id="jsbin-css">
+        body {
+            font-family: sans-serif;
+        }
+
+        tr {
+            background: #fafafa;
+        }
+
+        tr:nth-child(2n) {
+            background: #eee;
+        }
+
+        td {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+    </tr>
+</table>
+<script src="./ddt.js"></script>
+<script>
+    new DDT(document.querySelector('table'));
+</script>
+</body>
+</html>
