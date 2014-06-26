@@ -240,12 +240,11 @@ class DDTElement {
         if (ourOffset.top < parentOffset.top) {
             bounds.y = DDTBoundsValue.LOW;
         } else {
-           if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
-            console.log(diffY);
-               bounds.y = DDTBoundsValue.IN;
-           } else {
-               bounds.y = DDTBoundsValue.HIGH;
-           }
+            if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
+                bounds.y = DDTBoundsValue.IN;
+            } else {
+                bounds.y = DDTBoundsValue.HIGH;
+            }
         }
 
         if (ourOffset.left < parentOffset.left) {
@@ -428,8 +427,6 @@ export class DragAndDropTable {
         row.hide();
 
         shadow.element.appendTo('body');
-
-
 
         shadow.emitter.on(DDTEvents.shadowPosition, (coords : DDTCoords) => {
             this.handleScrolling(shadow);
