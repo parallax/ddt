@@ -236,7 +236,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 bounds.y = 0 /* LOW */;
             } else {
                 if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
-                    console.log(diffY);
                     bounds.y = 1 /* IN */;
                 } else {
                     bounds.y = 2 /* HIGH */;
