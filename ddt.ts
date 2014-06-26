@@ -295,7 +295,7 @@ export class DragAndDropTable {
     }
 
     wireEvents() {
-        this.table.element.on('mousedown', 'tr', e => this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e)));
+        this.table.element.on('mousedown', 'tbody tr', e => this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e)));
     }
 
     // @todo This is far too messy. Clean it up
@@ -310,7 +310,7 @@ export class DragAndDropTable {
         shadow.element.appendTo('body');
 
         shadow.emitter.on(DDTEvents.shadowPosition, (coords : DDTCoords) => {
-            this.table.element.find('tr').each((idx, tr) => {
+            this.table.element.find('tbody tr').each((idx, tr) => {
 
                 if (tr === row.getNode()) {
                     return;

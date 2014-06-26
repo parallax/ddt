@@ -301,7 +301,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
-            this.table.element.on('mousedown', 'tr', function (e) {
+            this.table.element.on('mousedown', 'tbody tr', function (e) {
                 return _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
             });
         };
@@ -319,7 +319,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             shadow.element.appendTo('body');
 
             shadow.emitter.on(DDTEvents.shadowPosition, function (coords) {
-                _this.table.element.find('tr').each(function (idx, tr) {
+                _this.table.element.find('tbody tr').each(function (idx, tr) {
                     if (tr === row.getNode()) {
                         return;
                     }
