@@ -227,22 +227,22 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             };
 
             if (ourOffset.top < parentOffset.top) {
-                bounds.x = 0 /* LOW */;
+                bounds.y = 0 /* LOW */;
             } else {
                 if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
-                    bounds.x = 1 /* IN */;
+                    bounds.y = 1 /* IN */;
                 } else {
-                    bounds.x = 2 /* HIGH */;
+                    bounds.y = 2 /* HIGH */;
                 }
             }
 
             if (ourOffset.left < parentOffset.left) {
-                bounds.y = 0 /* LOW */;
+                bounds.x = 0 /* LOW */;
             } else {
                 if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
-                    bounds.y = 1 /* IN */;
+                    bounds.x = 1 /* IN */;
                 } else {
-                    bounds.y = 2 /* HIGH */;
+                    bounds.x = 2 /* HIGH */;
                 }
             }
 

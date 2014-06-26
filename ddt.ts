@@ -234,22 +234,22 @@ class DDTElement {
         };
 
         if (ourOffset.top < parentOffset.top) {
-            bounds.x = DDTBoundsValue.LOW;
+            bounds.y = DDTBoundsValue.LOW;
         } else {
            if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
                bounds.x = DDTBoundsValue.IN;
            } else {
-               bounds.x = DDTBoundsValue.HIGH;
+               bounds.y = DDTBoundsValue.HIGH;
            }
         }
 
         if (ourOffset.left < parentOffset.left) {
-            bounds.y = DDTBoundsValue.LOW;
+            bounds.x = DDTBoundsValue.LOW;
         } else {
             if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
-                bounds.y = DDTBoundsValue.IN;
+                bounds.x = DDTBoundsValue.IN;
             } else {
-                bounds.y = DDTBoundsValue.HIGH;
+                bounds.x = DDTBoundsValue.HIGH;
             }
         }
 
