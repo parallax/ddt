@@ -7,14 +7,6 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $, _) {
-    var DDTEvents = (function () {
-        function DDTEvents() {
-        }
-        DDTEvents.shadowPosition = 'ddt.position';
-        DDTEvents.reorder = 'ddt.order';
-        return DDTEvents;
-    })();
-
     var DDTEventEmitter = (function () {
         function DDTEventEmitter() {
             this.handlers = {};
@@ -134,13 +126,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTCSS.noSelect = 'DDTNoSelect';
         return DDTCSS;
     })();
+    exports.DDTCSS = DDTCSS;
 
-    var DDTBoundsValue;
     (function (DDTBoundsValue) {
         DDTBoundsValue[DDTBoundsValue["LOW"] = 0] = "LOW";
         DDTBoundsValue[DDTBoundsValue["IN"] = 1] = "IN";
         DDTBoundsValue[DDTBoundsValue["HIGH"] = 2] = "HIGH";
-    })(DDTBoundsValue || (DDTBoundsValue = {}));
+    })(exports.DDTBoundsValue || (exports.DDTBoundsValue = {}));
+    var DDTBoundsValue = exports.DDTBoundsValue;
 
     var DDTElement = (function () {
         function DDTElement(element) {
@@ -255,8 +248,63 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return bounds;
         };
 
+        DDTElement.prototype.clone = function (ignoreElements) {
+            if (typeof ignoreElements === "undefined") { ignoreElements = []; }
+            var cloneFn = function (el) {
+                var clone = $(document.createElement(el[0].tagName));
+
+                DDTElement.cloneUniqueStyles(el[0], clone[0]);
+
+                if (!el.children().length) {
+                    clone.text(el.text());
+                }
+
+                el.children().each(function (idx, cEl) {
+                    if (ignoreElements.indexOf(cEl) > -1) {
+                        return;
+                    }
+
+                    clone.append(cloneFn($(cEl)));
+                });
+
+                return clone;
+            };
+
+            return new DDTElement(cloneFn(this.element));
+        };
+
         DDTElement.applyStyles = function (element, styles) {
             element.setAttribute('style', styles.cssText);
+        };
+
+        DDTElement.applyStyleRules = function (element, styleRules) {
+            element.setAttribute('style', DDTCSS.rulesToCSS(styleRules));
+        };
+
+        DDTElement.getUniqueStyles = function (element) {
+            var ourStyles = DDTElement.getStyles(element);
+
+            var dummy = document.createElement(element.tagName);
+            document.body.appendChild(dummy);
+
+            var dummyStyles = window.getComputedStyle(dummy);
+
+            var pairs = _.chain(ourStyles).pairs().map(function (p) {
+                var k = DDTCSS.arrowCase(p[0]);
+                var v = p[1];
+
+                if (dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k) || !ourStyles.getPropertyValue(k)) {
+                    return null;
+                }
+
+                return p;
+            }).filter(function (p) {
+                return !!p;
+            }).value();
+
+            dummy.parentNode.removeChild(dummy);
+
+            return _.object(pairs);
         };
 
         DDTElement.getStyles = function (element) {
@@ -266,8 +314,13 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTElement.cloneStyles = function (element, clone) {
             DDTElement.applyStyles(clone, DDTElement.getStyles(element));
         };
+
+        DDTElement.cloneUniqueStyles = function (element, clone) {
+            DDTElement.applyStyleRules(clone, DDTElement.getUniqueStyles(element));
+        };
         return DDTElement;
     })();
+    exports.DDTElement = DDTElement;
 
     var DDTPositionableElement = (function (_super) {
         __extends(DDTPositionableElement, _super);
@@ -309,10 +362,11 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 left: coords.x
             });
 
-            this.emitter.emit(DDTEvents.shadowPosition, [coords]);
+            this.emitter.emit('ddt.position', [coords]);
         };
         return DDTPositionableElement;
     })(DDTElement);
+    exports.DDTPositionableElement = DDTPositionableElement;
 
     var DDTRow = (function (_super) {
         __extends(DDTRow, _super);
@@ -321,6 +375,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         }
         return DDTRow;
     })(DDTElement);
+    exports.DDTRow = DDTRow;
 
     var DDTShadowRow = (function (_super) {
         __extends(DDTShadowRow, _super);
@@ -329,11 +384,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
             element.addClass(DDTCSS.shadowRow);
         }
-        DDTShadowRow.prototype.cloneHTML = function (element) {
-            this.getNode().innerHTML = element.getNode().innerHTML;
-        };
         return DDTShadowRow;
     })(DDTRow);
+    exports.DDTShadowRow = DDTShadowRow;
 
     var DDTTable = (function (_super) {
         __extends(DDTTable, _super);
@@ -341,12 +394,13 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             _super.apply(this, arguments);
         }
         DDTTable.prototype.createShadow = function (row) {
-            var shadowTable = new DDTShadowTable($(document.createElement('table')));
-            var shadowRow = new DDTShadowRow($(document.createElement('tr')));
+            var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
+            var shadowTable = new DDTShadowTable(clonedTable.element);
 
-            if (this.element.find('colgroup').length) {
-                shadowTable.element.prepend(this.element.find('colgroup').clone());
-            }
+            var clonedRow = row.clone();
+            var shadowRow = new DDTShadowRow(clonedRow.element);
+
+            shadowTable.element.css('height', 'auto');
 
             var width = this.element.outerWidth();
 
@@ -355,16 +409,15 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             }
 
             shadowTable.element.width(width);
-
-            shadowRow.cloneStyles(row);
-            shadowRow.cloneHTML(row);
-
             shadowTable.setShadowRow(shadowRow);
+
+            DDTElement.cloneUniqueStyles(this.element.find('tbody')[0], shadowTable.element.find('tbody')[0]);
 
             return shadowTable;
         };
         return DDTTable;
     })(DDTPositionableElement);
+    exports.DDTTable = DDTTable;
 
     var DDTShadowTable = (function (_super) {
         __extends(DDTShadowTable, _super);
@@ -383,6 +436,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
         return DDTShadowTable;
     })(DDTTable);
+    exports.DDTShadowTable = DDTShadowTable;
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
@@ -428,7 +482,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
             shadow.element.appendTo('body');
 
-            shadow.emitter.on(DDTEvents.shadowPosition, function (coords) {
+            shadow.emitter.on('ddt.position', function (coords) {
                 _this.handleScrolling(shadow);
 
                 _this.table.element.find('tbody tr').each(function (idx, tr) {
@@ -442,10 +496,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                         row.swap(new DDTElement($(tr)));
 
                         row.show();
-                        shadow.row.cloneStyles(row);
+                        DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0]);
                         row.hide();
 
-                        _this.emitter.emit(DDTEvents.reorder, [
+                        _this.emitter.emit('ddt.order', [
                             _.map(_this.table.element.find('tbody tr'), function (tr) {
                                 return $(tr).data('value');
                             })

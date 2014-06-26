@@ -4,23 +4,9 @@
 import $ = require('jquery');
 import _ = require('lodash');
 
-interface Window {
-    getMatchedCSSRules(element : Element) : CSSRuleList;
-}
-
 export interface Event {
     pageX : number;
     pageY : number;
-}
-
-interface DDTDimensions {
-    width  : number;
-    height : number;
-}
-
-class DDTEvents {
-    static shadowPosition = 'ddt.position';
-    static reorder        = 'ddt.order';
 }
 
 export class DDTEventEmitter {
@@ -100,7 +86,7 @@ export class DDTCoords {
     }
 }
 
-class DDTCSS {
+export class DDTCSS {
     static notVisible  = 'DDTNotVisible';
     static shadowTable = 'DDTShadowTable';
     static shadowRow   = 'DDTShadowRow';
@@ -121,7 +107,7 @@ class DDTCSS {
         return DDTCSS.defineSelector('.' + className, rules);
     }
 
-    private static rulesToCSS(rules : Object) : string {
+    static rulesToCSS(rules : Object) : string {
         return _.chain(rules)
             .pairs()
             .map(p => [this.arrowCase(p[0]), ':', p[1], ';'])
@@ -130,22 +116,22 @@ class DDTCSS {
         .value();
     }
 
-    private static arrowCase(name : string) {
+    static arrowCase(name : string) {
         return name.replace(/([A-Z])/g, '-$1').toLowerCase();
     }
 }
 
 
-enum DDTBoundsValue {
+export enum DDTBoundsValue {
     LOW, IN, HIGH
 }
 
-interface DDTBounds {
+export interface DDTBounds {
     x  : DDTBoundsValue;
     y  : DDTBoundsValue;
 }
 
-class DDTElement {
+export class DDTElement {
 
     element : JQuery;
     emitter : DDTEventEmitter;
@@ -204,8 +190,8 @@ class DDTElement {
         return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
     }
 
-    dimensions(outer : boolean = false) : DDTDimensions {
-        var dimensions : DDTDimensions = {
+    dimensions(outer : boolean = false) : { width : number; height: number; } {
+        var dimensions = {
             width  : 0,
             height : 0
         };
@@ -260,20 +246,82 @@ class DDTElement {
         return bounds;
     }
 
+    clone(ignoreElements : Element[] = []) : DDTElement {
+
+        var cloneFn = (el : JQuery) => {
+            var clone = $(document.createElement(el[0].tagName));
+
+            DDTElement.cloneUniqueStyles(el[0], clone[0]);
+
+            if (!el.children().length) {
+                clone.text(el.text());
+            }
+
+            el.children().each((idx, cEl) => {
+
+                if (ignoreElements.indexOf(cEl) > -1) {
+                    return;
+                }
+
+                clone.append(cloneFn($(cEl)));
+            });
+
+            return clone;
+        }
+
+        return new DDTElement(cloneFn(this.element));
+    }
+
     static applyStyles(element : Element, styles : CSSStyleDeclaration) {
         element.setAttribute('style', styles.cssText);
     }
 
-    static getStyles(element : Element) {
+    static applyStyleRules(element : Element, styleRules : Object) {
+        element.setAttribute('style', DDTCSS.rulesToCSS(styleRules));
+    }
+
+    static getUniqueStyles(element : Element) : Object {
+        var ourStyles = DDTElement.getStyles(element);
+        
+        var dummy = document.createElement(element.tagName);
+        document.body.appendChild(dummy);
+
+        var dummyStyles = window.getComputedStyle(dummy);
+
+        var pairs = _.chain(ourStyles)
+            .pairs()
+            .map(p => {
+                var k = DDTCSS.arrowCase(p[0]);
+                var v = p[1];
+
+                if (dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k) || !ourStyles.getPropertyValue(k)) {
+                    return null;
+                }
+
+                return p;
+            })
+            .filter(p => !!p)
+        .value();
+
+        dummy.parentNode.removeChild(dummy);
+
+        return _.object(pairs);
+    }
+
+    static getStyles(element : Element) : CSSStyleDeclaration {
         return window.getComputedStyle(element);
     }
 
     static cloneStyles(element : Element, clone : Element) {
         DDTElement.applyStyles(clone, DDTElement.getStyles(element));
     }
+
+    static cloneUniqueStyles(element : Element, clone : Element) {
+        DDTElement.applyStyleRules(clone, DDTElement.getUniqueStyles(element));
+    }
 }
 
-class DDTPositionableElement extends DDTElement {
+export class DDTPositionableElement extends DDTElement {
 
     /**
      * @todo This is far too messy, clean it up
@@ -311,35 +359,30 @@ class DDTPositionableElement extends DDTElement {
             left : coords.x
         });
 
-        this.emitter.emit(DDTEvents.shadowPosition, [coords]);
+        this.emitter.emit('ddt.position', [coords]);
     }
 }
 
-class DDTRow extends DDTElement {
+export class DDTRow extends DDTElement {}
 
-}
-
-class DDTShadowRow extends DDTRow {
+export class DDTShadowRow extends DDTRow {
 
     constructor(element : JQuery) {
         super(element);
 
         element.addClass(DDTCSS.shadowRow);
     }
-
-    cloneHTML(element : DDTElement) {
-        this.getNode().innerHTML = element.getNode().innerHTML;
-    }
 }
 
-class DDTTable extends DDTPositionableElement {
+export class DDTTable extends DDTPositionableElement {
     createShadow(row : DDTRow) : DDTShadowTable {
-        var shadowTable = new DDTShadowTable($(document.createElement('table')));
-        var shadowRow   = new DDTShadowRow($(document.createElement('tr')));
+        var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
+        var shadowTable = new DDTShadowTable(clonedTable.element);
 
-        if (this.element.find('colgroup').length) {
-            shadowTable.element.prepend(this.element.find('colgroup').clone());
-        }
+        var clonedRow = row.clone();
+        var shadowRow = new DDTShadowRow(clonedRow.element);
+
+        shadowTable.element.css('height', 'auto');
 
         var width = this.element.outerWidth();
 
@@ -348,17 +391,15 @@ class DDTTable extends DDTPositionableElement {
         }
 
         shadowTable.element.width(width);
-
-        shadowRow.cloneStyles(row);
-        shadowRow.cloneHTML(row);
-
         shadowTable.setShadowRow(shadowRow);
+
+        DDTElement.cloneUniqueStyles(this.element.find('tbody')[0], shadowTable.element.find('tbody')[0]);
 
         return shadowTable;
     }
 }
 
-class DDTShadowTable extends DDTTable {
+export class DDTShadowTable extends DDTTable {
 
     public row : DDTShadowRow;
 
@@ -423,12 +464,12 @@ export class DragAndDropTable {
         var shadow      = this.table.createShadow(row);
         var rowPosition = DDTCoords.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
-
+        
         row.hide();
 
         shadow.element.appendTo('body');
 
-        shadow.emitter.on(DDTEvents.shadowPosition, (coords : DDTCoords) => {
+        shadow.emitter.on('ddt.position', (coords : DDTCoords) => {
             this.handleScrolling(shadow);
 
             this.table.element.find('tbody tr').each((idx, tr) => {
@@ -443,10 +484,10 @@ export class DragAndDropTable {
                     row.swap(new DDTElement($(tr)));
 
                     row.show();
-                    shadow.row.cloneStyles(row);
+                    DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0]);
                     row.hide();
 
-                    this.emitter.emit(DDTEvents.reorder, [
+                    this.emitter.emit('ddt.order', [
                         _.map(this.table.element.find('tbody tr'), tr => $(tr).data('value'))
                     ]);
                 }
