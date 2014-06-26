@@ -13,6 +13,11 @@ export interface Event {
     pageY : number;
 }
 
+interface DDTDimensions {
+    width  : number;
+    height : number;
+}
+
 class DDTEvents {
     static shadowPosition = 'ddt.position';
     static reorder        = 'ddt.order';
@@ -130,6 +135,16 @@ class DDTCSS {
     }
 }
 
+
+enum DDTBoundsValue {
+    LOW, IN, HIGH
+}
+
+interface DDTBounds {
+    x  : DDTBoundsValue;
+    y  : DDTBoundsValue;
+}
+
 class DDTElement {
 
     element : JQuery;
@@ -187,6 +202,58 @@ class DDTElement {
 
     getLeftPaddingAndBorder() {
         return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
+    }
+
+    dimensions(outer : boolean = false) : DDTDimensions {
+        var dimensions : DDTDimensions = {
+            width  : 0,
+            height : 0
+        };
+
+        if (outer) {
+            dimensions.width  = this.element.outerWidth();
+            dimensions.height = this.element.outerHeight();
+        } else {
+            dimensions.width  = this.element.width();
+            dimensions.height = this.element.height();
+        }
+
+        return dimensions;
+    }
+
+    calculateBounds(parent : DDTElement) {
+        var ourOffset    = this.element.offset();
+        var parentOffset = parent.element.offset();
+
+        var ourDimensions    = this.dimensions(true);
+        var parentDimensions = parent.dimensions(true);
+
+        var bounds : DDTBounds = {
+            x : null,
+            y : null
+        };
+
+        if (ourOffset.top < parentOffset.top) {
+            bounds.x = DDTBoundsValue.LOW;
+        } else {
+           if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
+               bounds.x = DDTBoundsValue.IN;
+           } else {
+               bounds.x = DDTBoundsValue.HIGH;
+           }
+        }
+
+        if (ourOffset.left < parentOffset.left) {
+            bounds.y = DDTBoundsValue.LOW;
+        } else {
+            if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
+                bounds.y = DDTBoundsValue.IN;
+            } else {
+                bounds.y = DDTBoundsValue.HIGH;
+            }
+        }
+
+        return bounds;
     }
 
     static applyStyles(element : Element, styles : CSSStyleDeclaration) {
