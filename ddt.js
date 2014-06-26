@@ -135,6 +135,13 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         return DDTCSS;
     })();
 
+    var DDTBoundsValue;
+    (function (DDTBoundsValue) {
+        DDTBoundsValue[DDTBoundsValue["LOW"] = 0] = "LOW";
+        DDTBoundsValue[DDTBoundsValue["IN"] = 1] = "IN";
+        DDTBoundsValue[DDTBoundsValue["HIGH"] = 2] = "HIGH";
+    })(DDTBoundsValue || (DDTBoundsValue = {}));
+
     var DDTElement = (function () {
         function DDTElement(element) {
             this.element = element;
@@ -187,6 +194,59 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
         DDTElement.prototype.getLeftPaddingAndBorder = function () {
             return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
+        };
+
+        DDTElement.prototype.dimensions = function (outer) {
+            if (typeof outer === "undefined") { outer = false; }
+            var dimensions = {
+                width: 0,
+                height: 0
+            };
+
+            if (outer) {
+                dimensions.width = this.element.outerWidth();
+                dimensions.height = this.element.outerHeight();
+            } else {
+                dimensions.width = this.element.width();
+                dimensions.height = this.element.height();
+            }
+
+            return dimensions;
+        };
+
+        DDTElement.prototype.calculateBounds = function (parent) {
+            var ourOffset = this.element.offset();
+            var parentOffset = parent.element.offset();
+
+            var ourDimensions = this.dimensions(true);
+            var parentDimensions = parent.dimensions(true);
+
+            var bounds = {
+                x: null,
+                y: null
+            };
+
+            if (ourOffset.top < parentOffset.top) {
+                bounds.x = 0 /* LOW */;
+            } else {
+                if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
+                    bounds.x = 1 /* IN */;
+                } else {
+                    bounds.x = 2 /* HIGH */;
+                }
+            }
+
+            if (ourOffset.left < parentOffset.left) {
+                bounds.y = 0 /* LOW */;
+            } else {
+                if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
+                    bounds.y = 1 /* IN */;
+                } else {
+                    bounds.y = 2 /* HIGH */;
+                }
+            }
+
+            return bounds;
         };
 
         DDTElement.applyStyles = function (element, styles) {
