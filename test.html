@@ -42,6 +42,10 @@
             position: relative;
             z-index: 9;
         }
+
+        html, body {
+            padding: 0; margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -227,7 +231,7 @@
     </tbody>
 </table>
 
-<button id="toggle">Toggle enbabled/display</button>
+<!-- <button id="toggle">Toggle enbabled/display</button> -->
 <script>
 
     define('jquery', function() { return $; });
@@ -243,7 +247,7 @@
         });
 
         table.emitter.on('ddt.order', function(order) {
-            console.log(order);
+            // console.log(order);
         });
     });
 </script>
