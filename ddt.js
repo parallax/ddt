@@ -119,10 +119,7 @@ var DDTPositionableElement = (function (_super) {
                 position = position.minus(diff);
             }
 
-            _this.element.css({
-                top: position.y,
-                left: position.x
-            });
+            _this.setPosition(position);
         };
 
         var $doc = $(document);

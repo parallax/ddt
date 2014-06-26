@@ -130,10 +130,7 @@ class DDTPositionableElement extends DDTElement {
                 position = position.minus(diff);
             }
 
-            this.element.css({
-                top  : position.y,
-                left : position.x
-            });
+            this.setPosition(position);
         };
 
         var $doc = $(document);
