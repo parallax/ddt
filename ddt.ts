@@ -12,6 +12,7 @@ interface Event {
 
 class DDTEvents {
     static shadowPosition = 'ddt.position';
+    static reorder        = 'ddt.order';
 }
 
 class DDTEventEmitter {
@@ -273,10 +274,13 @@ class DDTShadowTable extends DDTTable {
 
 class DragAndDropTable {
 
+    public emitter : DDTEventEmitter;
+
     private table : DDTTable;
 
     constructor(table : JQuery) {
-        this.table = new DDTTable(table);
+        this.table   = new DDTTable(table);
+        this.emitter = new DDTEventEmitter();
 
         this.wireEvents();
     }
@@ -312,6 +316,9 @@ class DragAndDropTable {
                     shadow.row.cloneStyles(row);
                     row.hide();
 
+                    this.emitter.emit(DDTEvents.reorder, [
+                        _.map(this.table.element.find('tr'), tr => $(tr).data('value'))
+                    ]);
                 }
             });
         });

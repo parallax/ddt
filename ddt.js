@@ -11,6 +11,7 @@ var DDTEvents = (function () {
     function DDTEvents() {
     }
     DDTEvents.shadowPosition = 'ddt.position';
+    DDTEvents.reorder = 'ddt.order';
     return DDTEvents;
 })();
 
@@ -286,6 +287,7 @@ var DDTShadowTable = (function (_super) {
 var DragAndDropTable = (function () {
     function DragAndDropTable(table) {
         this.table = new DDTTable(table);
+        this.emitter = new DDTEventEmitter();
 
         this.wireEvents();
     }
@@ -322,6 +324,12 @@ var DragAndDropTable = (function () {
                     row.show();
                     shadow.row.cloneStyles(row);
                     row.hide();
+
+                    _this.emitter.emit(DDTEvents.reorder, [
+                        _.map(_this.table.element.find('tr'), function (tr) {
+                            return $(tr).data('value');
+                        })
+                    ]);
                 }
             });
         });
