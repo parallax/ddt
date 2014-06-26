@@ -225,7 +225,7 @@ class DDTElement {
         return this.element.offset() || { top : 0, left : 0 };
     }
 
-    calculateBounds(parent : DDTElement) {
+    calculateBounds(parent : DDTElement, diffX : number = 0, diffY : number = 0) : DDTBounds {
         var ourOffset    = this.offset();
         var parentOffset = parent.offset();
 
@@ -240,8 +240,9 @@ class DDTElement {
         if (ourOffset.top < parentOffset.top) {
             bounds.y = DDTBoundsValue.LOW;
         } else {
-           if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
-               bounds.x = DDTBoundsValue.IN;
+           if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
+            console.log(diffY);
+               bounds.y = DDTBoundsValue.IN;
            } else {
                bounds.y = DDTBoundsValue.HIGH;
            }
@@ -383,12 +384,16 @@ export class DragAndDropTable {
     public emitter : DDTEventEmitter;
 
     private table : DDTTable;
-
+    private window : DDTElement;
     private enabled = true;
+
+    private scrolling = false;
 
     constructor(table : JQuery) {
         this.table   = new DDTTable(table);
         this.emitter = new DDTEventEmitter();
+
+        this.window = new DDTElement($(window));
 
         this.wireEvents();
     }
@@ -424,7 +429,11 @@ export class DragAndDropTable {
 
         shadow.element.appendTo('body');
 
+
+
         shadow.emitter.on(DDTEvents.shadowPosition, (coords : DDTCoords) => {
+            this.handleScrolling(shadow);
+
             this.table.element.find('tbody tr').each((idx, tr) => {
 
                 if (tr === row.getNode()) {
@@ -464,6 +473,28 @@ export class DragAndDropTable {
 
             row.show();
         });
+    }
+
+    private handleScrolling(shadow : DDTShadowTable) {
+        var bounds = shadow.calculateBounds(this.window);
+
+        if (bounds.y === DDTBoundsValue.IN) {
+            return;
+        }
+
+        var tableBounds = shadow.calculateBounds(this.table, 0, shadow.row.element.outerHeight());
+
+        if (tableBounds.y !== DDTBoundsValue.IN) {
+            return;
+        }
+
+        if (bounds.y === DDTBoundsValue.HIGH) {
+            document.body.scrollTop += 5;
+        }
+
+        if (bounds.y === DDTBoundsValue.LOW) {
+            document.body.scrollTop -= 5;
+        }
     }
 }
 

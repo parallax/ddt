@@ -218,7 +218,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return this.element.offset() || { top: 0, left: 0 };
         };
 
-        DDTElement.prototype.calculateBounds = function (parent) {
+        DDTElement.prototype.calculateBounds = function (parent, diffX, diffY) {
+            if (typeof diffX === "undefined") { diffX = 0; }
+            if (typeof diffY === "undefined") { diffY = 0; }
             var ourOffset = this.offset();
             var parentOffset = parent.offset();
 
@@ -233,7 +235,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             if (ourOffset.top < parentOffset.top) {
                 bounds.y = 0 /* LOW */;
             } else {
-                if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height) {
+                if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
+                    console.log(diffY);
                     bounds.y = 1 /* IN */;
                 } else {
                     bounds.y = 2 /* HIGH */;
@@ -385,8 +388,11 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
             this.enabled = true;
+            this.scrolling = false;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
+
+            this.window = new DDTElement($(window));
 
             this.wireEvents();
         }
@@ -424,6 +430,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             shadow.element.appendTo('body');
 
             shadow.emitter.on(DDTEvents.shadowPosition, function (coords) {
+                _this.handleScrolling(shadow);
+
                 _this.table.element.find('tbody tr').each(function (idx, tr) {
                     if (tr === row.getNode()) {
                         return;
@@ -466,6 +474,28 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
                 row.show();
             });
+        };
+
+        DragAndDropTable.prototype.handleScrolling = function (shadow) {
+            var bounds = shadow.calculateBounds(this.window);
+
+            if (bounds.y === 1 /* IN */) {
+                return;
+            }
+
+            var tableBounds = shadow.calculateBounds(this.table, 0, shadow.row.element.outerHeight());
+
+            if (tableBounds.y !== 1 /* IN */) {
+                return;
+            }
+
+            if (bounds.y === 2 /* HIGH */) {
+                document.body.scrollTop += 5;
+            }
+
+            if (bounds.y === 0 /* LOW */) {
+                document.body.scrollTop -= 5;
+            }
         };
         return DragAndDropTable;
     })();
