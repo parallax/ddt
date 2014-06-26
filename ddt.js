@@ -8,16 +8,19 @@ var DDT = (function () {
         this.mousemove = function (e) {
             var pos = DDT.eventToPosition(e);
             _this.updateClonePosition(pos);
-
-            var tablePosition = _this.$element.offset();
-
-            _this.$element.find('tr').each(function (i, row) {
-                if (pos.top < $(row).position().top) {
-                    $(row).before(_this.$currentRow);
-                }
-
-                console.log($(row).position().top, pos.top);
-            });
+            //
+            //        var tablePosition = this.$element.offset();
+            //
+            //        this.$element.find('tr').each((i, row) => {
+            //
+            //            if (pos.top < $(row).position().top && false) {
+            //                $(row).before(this.$currentRow)
+            //
+            //                this.showCurrentRow();
+            //                DDT.cloneStyles(this.$currentRow[0], this.$clone.find('tr')[0]);
+            //                this.hideCurrentRow();
+            //            }
+            //        });
         };
         this.endDrag = function () {
             $(document).off('mousemove', _this.mousemove);
@@ -26,7 +29,7 @@ var DDT = (function () {
             _this.$clone.remove();
             _this.$clone = null;
 
-            _this.$currentRow.removeClass(DDT.DDTNotVisibleClass);
+            _this.showCurrentRow();
             _this.$currentRow = null;
 
             _this.diff = null;
@@ -45,7 +48,9 @@ var DDT = (function () {
     DDT.prototype.startDrag = function (row, position) {
         $(document).one('mouseup', this.endDrag).on('mousemove', this.mousemove);
 
-        var $currentRow = this.$currentRow = $(row);
+        DDT.clearSelection();
+
+        this.$currentRow = $(row);
         var offset = this.$currentRow.offset();
         var computed = window.getComputedStyle(row);
         var spacing = computed['border-spacing'].split(' ').map(function (n) {
@@ -65,7 +70,7 @@ var DDT = (function () {
 
         this.updateClonePosition(position);
 
-        this.$currentRow.addClass(DDT.DDTNotVisibleClass);
+        this.hideCurrentRow();
         $('body').addClass(DDT.NoSelectClass);
     };
 
@@ -74,6 +79,30 @@ var DDT = (function () {
             top: position.top - this.diff.top + 'px',
             left: position.left - this.diff.left + 'px'
         });
+    };
+
+    DDT.prototype.showCurrentRow = function () {
+        DDT.showElement(this.$currentRow);
+    };
+
+    DDT.prototype.hideCurrentRow = function () {
+        DDT.hideElement(this.$currentRow);
+    };
+
+    DDT.showElement = function (row) {
+        row.removeClass(DDT.DDTNotVisibleClass);
+    };
+
+    DDT.hideElement = function (row) {
+        row.addClass(DDT.DDTNotVisibleClass);
+    };
+
+    DDT.clearSelection = function () {
+        if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        } else if (document.selection) {
+            document.selection.empty();
+        }
     };
 
     DDT.eventToPosition = function (e) {
@@ -92,12 +121,21 @@ var DDT = (function () {
             computed = window.getComputedStyle(element);
         }
 
+        DDT.applyStyles(computed, clone);
+
         clone.innerHTML = element.innerHTML;
-        clone.setAttribute('style', computed.cssText);
 
         table.appendChild(clone);
 
         return table;
+    };
+
+    DDT.cloneStyles = function (element, clone) {
+        DDT.applyStyles(window.getComputedStyle(element), clone);
+    };
+
+    DDT.applyStyles = function (styles, element) {
+        element.setAttribute('style', styles.cssText);
     };
 
     DDT.defineCSSSelector = function (selectorName, rules) {
