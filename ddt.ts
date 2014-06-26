@@ -250,6 +250,12 @@ class DDTTable extends DDTPositionableElement {
         var shadowTable = new DDTShadowTable($(document.createElement('table')));
         var shadowRow   = new DDTShadowRow($(document.createElement('tr')));
 
+        if (this.element.find('colgroup').length) {
+            shadowTable.element.prepend(this.element.find('colgroup').clone());
+        }
+
+        shadowTable.element.width(this.element.width());
+
         shadowRow.cloneStyles(row);
         shadowRow.cloneHTML(row);
 
