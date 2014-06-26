@@ -1,144 +1,41 @@
 /// <reference path='./typings/jquery/jquery.d.ts' />
 /// <reference path='./typings/lodash/lodash.d.ts' />
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 
-var DDT = (function () {
-    function DDT(element) {
-        var _this = this;
-        this.element = element;
-        this.mousemove = function (e) {
-            var pos = DDT.eventToPosition(e);
-            _this.updateClonePosition(pos);
-            //
-            //        var tablePosition = this.$element.offset();
-            //
-            //        this.$element.find('tr').each((i, row) => {
-            //
-            //            if (pos.top < $(row).position().top && false) {
-            //                $(row).before(this.$currentRow)
-            //
-            //                this.showCurrentRow();
-            //                DDT.cloneStyles(this.$currentRow[0], this.$clone.find('tr')[0]);
-            //                this.hideCurrentRow();
-            //            }
-            //        });
-        };
-        this.endDrag = function () {
-            $(document).off('mousemove', _this.mousemove);
-            $('body').removeClass(DDT.NoSelectClass);
-
-            _this.$clone.remove();
-            _this.$clone = null;
-
-            _this.showCurrentRow();
-            _this.$currentRow = null;
-
-            _this.diff = null;
-        };
-        this.$element = $(this.element);
-
-        this.wireEvents();
+var DDTCoords = (function () {
+    function DDTCoords(x, y) {
+        this.x = x;
+        this.y = y;
     }
-    DDT.prototype.wireEvents = function () {
-        var _this = this;
-        this.$element.on('mousedown', 'tr', function (e) {
-            return _this.startDrag(e.currentTarget, DDT.eventToPosition(e));
-        });
+    DDTCoords.prototype.minus = function (coords) {
+        return new DDTCoords(this.x - coords.x, this.y - coords.y);
     };
 
-    DDT.prototype.startDrag = function (row, position) {
-        $(document).one('mouseup', this.endDrag).on('mousemove', this.mousemove);
-
-        DDT.clearSelection();
-
-        this.$currentRow = $(row);
-        var offset = this.$currentRow.offset();
-        var computed = window.getComputedStyle(row);
-        var spacing = computed['border-spacing'].split(' ').map(function (n) {
-            return parseInt(n, 10);
-        });
-
-        this.diff = {
-            top: position.top - offset.top + spacing[1],
-            left: position.left - offset.left
-        };
-
-        var clone = DDT.cloneElement(row, computed);
-
-        this.$clone = $(clone);
-        this.$clone.addClass(DDT.CloneElementClass);
-        this.$clone.appendTo('body');
-
-        this.updateClonePosition(position);
-
-        this.hideCurrentRow();
-        $('body').addClass(DDT.NoSelectClass);
+    DDTCoords.fromEvent = function (event) {
+        return new DDTCoords(event.pageX, event.pageY);
     };
 
-    DDT.prototype.updateClonePosition = function (position) {
-        this.$clone.css({
-            top: position.top - this.diff.top + 'px',
-            left: position.left - this.diff.left + 'px'
-        });
+    DDTCoords.fromElement = function (element) {
+        return DDTCoords.fromJQuery($(element));
     };
 
-    DDT.prototype.showCurrentRow = function () {
-        DDT.showElement(this.$currentRow);
+    DDTCoords.fromJQuery = function (jquery) {
+        var offset = jquery.offset();
+
+        return new DDTCoords(offset.left, offset.top);
     };
+    return DDTCoords;
+})();
 
-    DDT.prototype.hideCurrentRow = function () {
-        DDT.hideElement(this.$currentRow);
-    };
-
-    DDT.showElement = function (row) {
-        row.removeClass(DDT.DDTNotVisibleClass);
-    };
-
-    DDT.hideElement = function (row) {
-        row.addClass(DDT.DDTNotVisibleClass);
-    };
-
-    DDT.clearSelection = function () {
-        if (window.getSelection) {
-            window.getSelection().removeAllRanges();
-        } else if (document.selection) {
-            document.selection.empty();
-        }
-    };
-
-    DDT.eventToPosition = function (e) {
-        return {
-            top: e.pageY,
-            left: e.pageX
-        };
-    };
-
-    DDT.cloneElement = function (element, computed) {
-        if (typeof computed === "undefined") { computed = null; }
-        var table = document.createElement('table');
-        var clone = document.createElement(element.tagName);
-
-        if (!computed) {
-            computed = window.getComputedStyle(element);
-        }
-
-        DDT.applyStyles(computed, clone);
-
-        clone.innerHTML = element.innerHTML;
-
-        table.appendChild(clone);
-
-        return table;
-    };
-
-    DDT.cloneStyles = function (element, clone) {
-        DDT.applyStyles(window.getComputedStyle(element), clone);
-    };
-
-    DDT.applyStyles = function (styles, element) {
-        element.setAttribute('style', styles.cssText);
-    };
-
-    DDT.defineCSSSelector = function (selectorName, rules) {
+var DDTCSS = (function () {
+    function DDTCSS() {
+    }
+    DDTCSS.defineSelector = function (selectorName, rules) {
         var style = document.createElement('style');
 
         style.appendChild(document.createTextNode(''));
@@ -155,18 +52,191 @@ var DDT = (function () {
         sheet.addRule(selectorName, css, 0);
     };
 
-    DDT.defineCSSClass = function (className, rules) {
-        return DDT.defineCSSSelector('.' + className, rules);
+    DDTCSS.defineClass = function (className, rules) {
+        return DDTCSS.defineSelector('.' + className, rules);
     };
-    DDT.DDTNotVisibleClass = 'DDTNotVisible';
-    DDT.CloneElementClass = 'DDTCloneElementClass';
-    DDT.NoSelectClass = 'DDTNoSelectClass';
-    return DDT;
+    DDTCSS.notVisible = 'DDTNotVisible';
+    DDTCSS.shadowTable = 'DDTShadowTable';
+    DDTCSS.shadowRow = 'DDTShadowRow';
+    DDTCSS.noSelect = 'DDTNoSelect';
+    return DDTCSS;
 })();
 
-DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility: 'hidden' });
-DDT.defineCSSClass(DDT.CloneElementClass, { position: 'absolute !important' });
-DDT.defineCSSSelector('.' + DDT.NoSelectClass + ', .' + DDT.NoSelectClass + ' *', {
+var DDTElement = (function () {
+    function DDTElement(element) {
+        this.element = element;
+    }
+    DDTElement.prototype.getNode = function () {
+        return this.element[0];
+    };
+
+    DDTElement.prototype.show = function () {
+        this.element.removeClass(DDTCSS.notVisible);
+    };
+
+    DDTElement.prototype.hide = function () {
+        this.element.addClass(DDTCSS.notVisible);
+    };
+
+    DDTElement.prototype.notSelectable = function () {
+        this.element.addClass(DDTCSS.noSelect);
+    };
+
+    DDTElement.prototype.selectable = function () {
+        this.element.removeClass(DDTCSS.noSelect);
+    };
+
+    DDTElement.prototype.getStyles = function () {
+        return window.getComputedStyle(this.getNode());
+    };
+
+    DDTElement.prototype.cloneStyles = function (element) {
+        this.applyStyles(element.getStyles());
+    };
+
+    DDTElement.prototype.applyStyles = function (styles) {
+        this.element.attr('style', styles.cssText);
+    };
+    return DDTElement;
+})();
+
+var DDTPositionableElement = (function (_super) {
+    __extends(DDTPositionableElement, _super);
+    function DDTPositionableElement() {
+        _super.apply(this, arguments);
+    }
+    DDTPositionableElement.prototype.attachToCursor = function (diff) {
+        var _this = this;
+        if (typeof diff === "undefined") { diff = null; }
+        var bodyElement = new DDTElement($('body'));
+
+        bodyElement.notSelectable();
+
+        var updateFunction = function (event) {
+            var position = DDTCoords.fromEvent(event);
+
+            if (diff) {
+                position = position.minus(diff);
+            }
+
+            _this.element.css({
+                top: position.y,
+                left: position.x
+            });
+        };
+
+        var $doc = $(document);
+
+        $doc.on('mousemove', updateFunction).one('mouseup', function () {
+            $doc.off('mousemove', updateFunction);
+            bodyElement.selectable();
+        });
+    };
+
+    DDTPositionableElement.prototype.setPosition = function (coords) {
+        this.element.css({
+            top: coords.y,
+            left: coords.x
+        });
+    };
+    return DDTPositionableElement;
+})(DDTElement);
+
+var DDTRow = (function (_super) {
+    __extends(DDTRow, _super);
+    function DDTRow() {
+        _super.apply(this, arguments);
+    }
+    return DDTRow;
+})(DDTElement);
+
+var DDTShadowRow = (function (_super) {
+    __extends(DDTShadowRow, _super);
+    function DDTShadowRow(element) {
+        _super.call(this, element);
+
+        element.addClass(DDTCSS.shadowRow);
+    }
+    DDTShadowRow.prototype.cloneHTML = function (element) {
+        this.getNode().innerHTML = element.getNode().innerHTML;
+    };
+    return DDTShadowRow;
+})(DDTRow);
+
+var DDTTable = (function (_super) {
+    __extends(DDTTable, _super);
+    function DDTTable() {
+        _super.apply(this, arguments);
+        this.rows = [];
+    }
+    DDTTable.prototype.createShadow = function (row) {
+        var shadowTable = new DDTShadowTable($(document.createElement('table')));
+        var shadowRow = new DDTShadowRow($(document.createElement('tr')));
+
+        shadowRow.cloneStyles(row);
+        shadowRow.cloneHTML(row);
+
+        shadowTable.addRow(shadowRow);
+
+        return shadowTable;
+    };
+
+    DDTTable.prototype.addRow = function (row) {
+        this.element.append(row.element);
+        this.rows.push(row);
+    };
+    return DDTTable;
+})(DDTPositionableElement);
+
+var DDTShadowTable = (function (_super) {
+    __extends(DDTShadowTable, _super);
+    function DDTShadowTable(element) {
+        _super.call(this, element);
+
+        element.addClass(DDTCSS.shadowTable);
+    }
+    return DDTShadowTable;
+})(DDTTable);
+
+var DragAndDropTable = (function () {
+    function DragAndDropTable(table) {
+        this.table = new DDTTable(table);
+
+        this.wireEvents();
+    }
+    DragAndDropTable.prototype.wireEvents = function () {
+        var _this = this;
+        this.table.element.on('mousedown', 'tr', function (e) {
+            return _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
+        });
+    };
+
+    DragAndDropTable.prototype.dragRow = function (rowElement, mousePosition) {
+        var row = new DDTRow(rowElement);
+        var shadow = this.table.createShadow(row);
+        var rowPosition = DDTCoords.fromJQuery(rowElement);
+        var diff = mousePosition.minus(rowPosition);
+
+        row.hide();
+
+        shadow.element.appendTo('body');
+
+        shadow.attachToCursor(diff);
+        shadow.setPosition(rowPosition);
+
+        $(document).one('mouseup', function () {
+            shadow.element.remove();
+
+            row.show();
+        });
+    };
+    return DragAndDropTable;
+})();
+
+DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden' });
+DDTCSS.defineClass(DDTCSS.shadowTable, { position: 'absolute !important' });
+DDTCSS.defineClass(DDTCSS.shadowRow, { position: 'relative !important ' });
+DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
     '-webkit-user-select': 'none',
     '-ms-user-select': 'none',
     '-o-user-select': 'none',
