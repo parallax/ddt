@@ -302,7 +302,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
             this.table.element.on('mousedown', 'tbody tr', function (e) {
-                return _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
+                if (e.which === 1) {
+                    _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
+                }
             });
         };
 

@@ -295,7 +295,11 @@ export class DragAndDropTable {
     }
 
     wireEvents() {
-        this.table.element.on('mousedown', 'tbody tr', e => this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e)));
+        this.table.element.on('mousedown', 'tbody tr', e => {
+            if (e.which === 1) {
+                this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e))
+            }
+        });
     }
 
     // @todo This is far too messy. Clean it up
