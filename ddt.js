@@ -349,7 +349,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                         row.hide();
 
                         _this.emitter.emit(DDTEvents.reorder, [
-                            _.map(_this.table.element.find('tr'), function (tr) {
+                            _.map(_this.table.element.find('tbody tr'), function (tr) {
                                 return $(tr).data('value');
                             })
                         ]);
