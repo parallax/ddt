@@ -7,6 +7,41 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 
+var DDTEvents = (function () {
+    function DDTEvents() {
+    }
+    DDTEvents.shadowPosition = 'ddt.position';
+    return DDTEvents;
+})();
+
+var DDTEventEmitter = (function () {
+    function DDTEventEmitter() {
+        this.handlers = {};
+    }
+    DDTEventEmitter.prototype.on = function (event, handler) {
+        if (!this.handlers[event]) {
+            this.handlers[event] = [];
+        }
+
+        this.handlers[event].push(handler);
+    };
+
+    DDTEventEmitter.prototype.emit = function (event, args) {
+        var _this = this;
+        (this.handlers[event] || []).forEach(function (h) {
+            return h.apply(_this, args);
+        });
+    };
+    return DDTEventEmitter;
+})();
+
+var DDTCoordsAxis;
+(function (DDTCoordsAxis) {
+    DDTCoordsAxis[DDTCoordsAxis["X"] = 0] = "X";
+    DDTCoordsAxis[DDTCoordsAxis["Y"] = 1] = "Y";
+})(DDTCoordsAxis || (DDTCoordsAxis = {}));
+;
+
 var DDTCoords = (function () {
     function DDTCoords(x, y) {
         this.x = x;
@@ -14,6 +49,32 @@ var DDTCoords = (function () {
     }
     DDTCoords.prototype.minus = function (coords) {
         return new DDTCoords(this.x - coords.x, this.y - coords.y);
+    };
+
+    DDTCoords.prototype.add = function (coords) {
+        return new DDTCoords(this.x + coords.x, this.y + coords.y);
+    };
+
+    DDTCoords.prototype.addToAxis = function (size, axisEnum) {
+        if (axisEnum === 0 /* X */) {
+            return new DDTCoords(this.x + size, this.y);
+        }
+
+        return new DDTCoords(this.x, this.y + size);
+    };
+
+    DDTCoords.prototype.gt = function (coords, axisEnum) {
+        var axis = DDTCoords.enumToAxis(axisEnum);
+        return this[axis] > coords[axis];
+    };
+
+    DDTCoords.prototype.lt = function (coords, axisEnum) {
+        var axis = DDTCoords.enumToAxis(axisEnum);
+        return this[axis] < coords[axis];
+    };
+
+    DDTCoords.prototype.isOverAxis = function (coords, size, axis) {
+        return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
     };
 
     DDTCoords.fromEvent = function (event) {
@@ -28,6 +89,10 @@ var DDTCoords = (function () {
         var offset = jquery.offset();
 
         return new DDTCoords(offset.left, offset.top);
+    };
+
+    DDTCoords.enumToAxis = function (axis) {
+        return axis === 0 /* X */ ? 'x' : 'y';
     };
     return DDTCoords;
 })();
@@ -58,7 +123,7 @@ var DDTCSS = (function () {
     };
 
     DDTCSS.arrowCase = function (name) {
-        return name.replace(/(A-Z)/g, '-$1').toLowerCase();
+        return name.replace(/([A-Z])/g, '-$1').toLowerCase();
     };
     DDTCSS.notVisible = 'DDTNotVisible';
     DDTCSS.shadowTable = 'DDTShadowTable';
@@ -70,9 +135,23 @@ var DDTCSS = (function () {
 var DDTElement = (function () {
     function DDTElement(element) {
         this.element = element;
+        this.emitter = new DDTEventEmitter();
     }
     DDTElement.prototype.getNode = function () {
         return this.element[0];
+    };
+
+    /**
+    * @todo This function is too complicated to be self-documenting. Document it.
+    */
+    DDTElement.prototype.swap = function (element) {
+        var ourNode = this.getNode();
+        var theirNode = element.getNode();
+        var ourNodeParent = ourNode.parentNode;
+        var sibling = ourNode.nextSibling === theirNode ? ourNode : ourNode.nextSibling;
+
+        theirNode.parentNode.insertBefore(ourNode, theirNode);
+        ourNodeParent.insertBefore(theirNode, sibling);
     };
 
     DDTElement.prototype.show = function () {
@@ -110,6 +189,10 @@ var DDTPositionableElement = (function (_super) {
     function DDTPositionableElement() {
         _super.apply(this, arguments);
     }
+    /**
+    * @todo This is far too messy, clean it up
+    * @param diff
+    */
     DDTPositionableElement.prototype.attachToCursor = function (diff) {
         var _this = this;
         if (typeof diff === "undefined") { diff = null; }
@@ -140,6 +223,8 @@ var DDTPositionableElement = (function (_super) {
             top: coords.y,
             left: coords.x
         });
+
+        this.emitter.emit(DDTEvents.shadowPosition, [coords]);
     };
     return DDTPositionableElement;
 })(DDTElement);
@@ -169,7 +254,6 @@ var DDTTable = (function (_super) {
     __extends(DDTTable, _super);
     function DDTTable() {
         _super.apply(this, arguments);
-        this.rows = [];
     }
     DDTTable.prototype.createShadow = function (row) {
         var shadowTable = new DDTShadowTable($(document.createElement('table')));
@@ -178,14 +262,9 @@ var DDTTable = (function (_super) {
         shadowRow.cloneStyles(row);
         shadowRow.cloneHTML(row);
 
-        shadowTable.addRow(shadowRow);
+        shadowTable.setShadowRow(shadowRow);
 
         return shadowTable;
-    };
-
-    DDTTable.prototype.addRow = function (row) {
-        this.element.append(row.element);
-        this.rows.push(row);
     };
     return DDTTable;
 })(DDTPositionableElement);
@@ -197,6 +276,10 @@ var DDTShadowTable = (function (_super) {
 
         element.addClass(DDTCSS.shadowTable);
     }
+    DDTShadowTable.prototype.setShadowRow = function (row) {
+        this.element.append(row.element);
+        this.row = row;
+    };
     return DDTShadowTable;
 })(DDTTable);
 
@@ -213,7 +296,9 @@ var DragAndDropTable = (function () {
         });
     };
 
+    // @todo This is far too messy. Clean it up
     DragAndDropTable.prototype.dragRow = function (rowElement, mousePosition) {
+        var _this = this;
         var row = new DDTRow(rowElement);
         var shadow = this.table.createShadow(row);
         var rowPosition = DDTCoords.fromJQuery(rowElement);
@@ -223,8 +308,30 @@ var DragAndDropTable = (function () {
 
         shadow.element.appendTo('body');
 
+        shadow.emitter.on(DDTEvents.shadowPosition, function (coords) {
+            _this.table.element.find('tr').each(function (idx, tr) {
+                if (tr === row.getNode()) {
+                    return;
+                }
+
+                var rowCoords = DDTCoords.fromElement(tr);
+
+                if (coords.isOverAxis(rowCoords, $(tr).height() / 2, 1 /* Y */)) {
+                    row.swap(new DDTElement($(tr)));
+
+                    row.show();
+                    shadow.row.cloneStyles(row);
+                    row.hide();
+                }
+            });
+        });
+
+        var spacing = row.getStyles()['border-spacing'].split(' ').map(function (n) {
+            return parseInt(n, 10);
+        });
+
         shadow.attachToCursor(diff);
-        shadow.setPosition(rowPosition);
+        shadow.setPosition(rowPosition.minus(new DDTCoords(0, spacing[1])));
 
         $(document).one('mouseup', function () {
             shadow.element.remove();
