@@ -10,6 +10,28 @@ interface Event {
     pageY : number;
 }
 
+class DDTEvents {
+    static shadowPosition = 'ddt.position';
+}
+
+class DDTEventEmitter {
+    private handlers = {};
+
+    public on(event : string, handler : Function) {
+        if (!this.handlers[event]) {
+            this.handlers[event] = [];
+        }
+
+        this.handlers[event].push(handler);
+    }
+
+    public emit(event : string, args : any[]) {
+        (this.handlers[event] || []).forEach(h => h.apply(this, args));
+    }
+}
+
+enum DDTCoordsAxis { X, Y };
+
 class DDTCoords {
 
     x : number;
@@ -24,6 +46,32 @@ class DDTCoords {
         return new DDTCoords(this.x - coords.x, this.y - coords.y);
     }
 
+    add(coords : DDTCoords) {
+        return new DDTCoords(this.x + coords.x, this.y + coords.y);
+    }
+
+    addToAxis(size : number, axisEnum : DDTCoordsAxis) {
+        if (axisEnum === DDTCoordsAxis.X) {
+            return new DDTCoords(this.x + size, this.y);
+        }
+
+        return new DDTCoords(this.x, this.y + size);
+    }
+
+    gt(coords : DDTCoords, axisEnum: DDTCoordsAxis) {
+        var axis = DDTCoords.enumToAxis(axisEnum);
+        return this[axis] > coords[axis];
+    }
+
+    lt(coords : DDTCoords, axisEnum : DDTCoordsAxis) {
+        var axis = DDTCoords.enumToAxis(axisEnum);
+        return this[axis] < coords[axis];
+    }
+
+    isOverAxis(coords : DDTCoords, size : number, axis : DDTCoordsAxis) {
+        return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
+    }
+
     static fromEvent(event : Event) {
         return new DDTCoords(event.pageX, event.pageY);
     }
@@ -36,6 +84,10 @@ class DDTCoords {
         var offset = jquery.offset();
 
         return new DDTCoords(offset.left, offset.top);
+    }
+
+    private static enumToAxis(axis : DDTCoordsAxis) {
+        return axis === DDTCoordsAxis.X ? 'x' : 'y';
     }
 }
 
@@ -70,20 +122,35 @@ class DDTCSS {
     }
 
     private static arrowCase(name : string) {
-        return name.replace(/(A-Z)/g, '-$1').toLowerCase();
+        return name.replace(/([A-Z])/g, '-$1').toLowerCase();
     }
 }
 
 class DDTElement {
 
     element : JQuery;
+    emitter : DDTEventEmitter;
+
+    constructor(element : JQuery) {
+        this.element = element;
+        this.emitter = new DDTEventEmitter();
+    }
 
     getNode() {
         return this.element[0];
     }
 
-    constructor(element : JQuery) {
-        this.element = element;
+    /**
+     * @todo This function is too complicated to be self-documenting. Document it.
+     */
+    swap(element : DDTElement) {
+        var ourNode       = this.getNode();
+        var theirNode     = element.getNode();
+        var ourNodeParent = ourNode.parentNode;
+        var sibling       = ourNode.nextSibling === theirNode ? ourNode : ourNode.nextSibling;
+
+        theirNode.parentNode.insertBefore(ourNode, theirNode);
+        ourNodeParent.insertBefore(theirNode, sibling);
     }
 
     show() {
@@ -117,6 +184,10 @@ class DDTElement {
 
 class DDTPositionableElement extends DDTElement {
 
+    /**
+     * @todo This is far too messy, clean it up
+     * @param diff
+     */
     attachToCursor(diff : DDTCoords = null) {
 
         var bodyElement = new DDTElement($('body'));
@@ -148,6 +219,8 @@ class DDTPositionableElement extends DDTElement {
             top  : coords.y,
             left : coords.x
         });
+
+        this.emitter.emit(DDTEvents.shadowPosition, [coords]);
     }
 }
 
@@ -169,8 +242,6 @@ class DDTShadowRow extends DDTRow {
 }
 
 class DDTTable extends DDTPositionableElement {
-    rows : DDTRow[] = [];
-
     createShadow(row : DDTRow) : DDTShadowTable {
         var shadowTable = new DDTShadowTable($(document.createElement('table')));
         var shadowRow   = new DDTShadowRow($(document.createElement('tr')));
@@ -178,22 +249,25 @@ class DDTTable extends DDTPositionableElement {
         shadowRow.cloneStyles(row);
         shadowRow.cloneHTML(row);
 
-        shadowTable.addRow(shadowRow);
+        shadowTable.setShadowRow(shadowRow);
 
         return shadowTable;
-    }
-
-    addRow(row : DDTRow) {
-        this.element.append(row.element);
-        this.rows.push(row);
     }
 }
 
 class DDTShadowTable extends DDTTable {
+
+    public row : DDTShadowRow;
+
     constructor(element : JQuery) {
         super(element);
 
         element.addClass(DDTCSS.shadowTable);
+    }
+
+    setShadowRow(row : DDTShadowRow) {
+        this.element.append(row.element);
+        this.row = row;
     }
 }
 
@@ -211,6 +285,7 @@ class DragAndDropTable {
         this.table.element.on('mousedown', 'tr', e => this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e)));
     }
 
+    // @todo This is far too messy. Clean it up
     dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
         var row         = new DDTRow(rowElement);
         var shadow      = this.table.createShadow(row);
@@ -221,8 +296,30 @@ class DragAndDropTable {
 
         shadow.element.appendTo('body');
 
+        shadow.emitter.on(DDTEvents.shadowPosition, (coords : DDTCoords) => {
+            this.table.element.find('tr').each((idx, tr) => {
+
+                if (tr === row.getNode()) {
+                    return;
+                }
+
+                var rowCoords = DDTCoords.fromElement(tr);
+
+                if (coords.isOverAxis(rowCoords, $(tr).height() / 2, DDTCoordsAxis.Y)) {
+                    row.swap(new DDTElement($(tr)));
+
+                    row.show();
+                    shadow.row.cloneStyles(row);
+                    row.hide();
+
+                }
+            });
+        });
+
+        var spacing = row.getStyles()['border-spacing'].split(' ').map(n => parseInt(n, 10));
+
         shadow.attachToCursor(diff);
-        shadow.setPosition(rowPosition);
+        shadow.setPosition(rowPosition.minus(new DDTCoords(0, spacing[1])));
 
         $(document).one('mouseup', () => {
             shadow.element.remove();
