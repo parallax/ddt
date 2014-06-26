@@ -43,17 +43,22 @@ var DDTCSS = (function () {
         document.head.appendChild(style);
 
         var sheet = style.sheet;
-        var css = '';
-
-        _.chain(rules).pairs().each(function (pair) {
-            css += pair[0] + ':' + pair[1] + ';';
-        });
-
-        sheet.addRule(selectorName, css, 0);
+        sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
     };
 
     DDTCSS.defineClass = function (className, rules) {
         return DDTCSS.defineSelector('.' + className, rules);
+    };
+
+    DDTCSS.rulesToCSS = function (rules) {
+        var _this = this;
+        return _.chain(rules).pairs().map(function (p) {
+            return [_this.arrowCase(p[0]), ':', p[1], ';'];
+        }).flatten().join('').value();
+    };
+
+    DDTCSS.arrowCase = function (name) {
+        return name.replace(/(A-Z)/g, '-$1').toLowerCase();
     };
     DDTCSS.notVisible = 'DDTNotVisible';
     DDTCSS.shadowTable = 'DDTShadowTable';
@@ -234,9 +239,9 @@ DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden' });
 DDTCSS.defineClass(DDTCSS.shadowTable, { position: 'absolute !important' });
 DDTCSS.defineClass(DDTCSS.shadowRow, { position: 'relative !important ' });
 DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
-    '-webkit-user-select': 'none',
-    '-ms-user-select': 'none',
-    '-o-user-select': 'none',
-    'user-select': 'none',
-    'cursor': 'default'
+    WebkitUserSelect: 'none',
+    MsUserSelect: 'none',
+    OUserSelect: 'none',
+    userSelect: 'none',
+    cursor: 'default'
 });

@@ -53,19 +53,24 @@ class DDTCSS {
         document.head.appendChild(style);
 
         var sheet = <CSSStyleSheet> style.sheet;
-        var css = '';
-
-        _.chain(rules)
-            .pairs()
-            .each((pair) => {
-                css += pair[0] + ':' + pair[1] + ';';
-            });
-
-        sheet.addRule(selectorName, css, 0);
+        sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
     }
 
     static defineClass(className : string, rules : Object) {
         return DDTCSS.defineSelector('.' + className, rules);
+    }
+
+    private static rulesToCSS(rules : Object) : string {
+        return _.chain(rules)
+            .pairs()
+            .map(p => [this.arrowCase(p[0]), ':', p[1], ';'])
+            .flatten()
+            .join('')
+        .value();
+    }
+
+    private static arrowCase(name : string) {
+        return name.replace(/(A-Z)/g, '-$1').toLowerCase();
     }
 }
 
@@ -231,10 +236,10 @@ DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden'});
 DDTCSS.defineClass(DDTCSS.shadowTable, { position : 'absolute !important' });
 DDTCSS.defineClass(DDTCSS.shadowRow, { position : 'relative !important ' });
 DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
-    '-webkit-user-select' : 'none',
-    '-ms-user-select'     : 'none',
-    '-o-user-select'      : 'none',
-    'user-select'         : 'none',
+    WebkitUserSelect : 'none',
+    MsUserSelect     : 'none',
+    OUserSelect      : 'none',
+    userSelect       : 'none',
 
-    'cursor'              : 'default'
+    cursor           : 'default'
 });
