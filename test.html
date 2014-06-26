@@ -3,6 +3,7 @@
 <head>
     <script src="http://code.jquery.com/jquery-git2.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.11/require.min.js"></script>
     <meta charset="utf-8">
 
     <style id="jsbin-css">
@@ -60,12 +61,18 @@
         <td>18</td>
     </tr>
 </table>
-<script src="./ddt.js"></script>
 <script>
-    var table = new DragAndDropTable($('table'));
 
-    table.emitter.on('ddt.order', function(order) {
-        console.log(order);
+    define('jquery', function() { return $; });
+    define('lodash', function() { return _ });
+
+    require(['ddt'], function(ddt) {
+
+        var table = new ddt.DragAndDropTable($('table'));
+
+        table.emitter.on('ddt.order', function(order) {
+            console.log(order);
+        });
     });
 </script>
 </body>
