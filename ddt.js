@@ -184,6 +184,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTElement.prototype.applyStyles = function (styles) {
             this.element.attr('style', styles.cssText);
         };
+
+        DDTElement.prototype.getLeftPaddingAndBorder = function () {
+            return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
+        };
         return DDTElement;
     })();
 
@@ -266,7 +270,13 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 shadowTable.element.prepend(this.element.find('colgroup').clone());
             }
 
-            shadowTable.element.width(this.element.width());
+            var width = this.element.outerWidth();
+
+            if (this.element.css('border-collapse') === 'collapse') {
+                width += new DDTElement(this.element.find('tbody')).getLeftPaddingAndBorder();
+            }
+
+            shadowTable.element.width(width);
 
             shadowRow.cloneStyles(row);
             shadowRow.cloneHTML(row);
@@ -357,12 +367,19 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 });
             });
 
-            var spacing = row.getStyles()['border-spacing'].split(' ').map(function (n) {
-                return parseInt(n, 10);
-            });
+            var styles = row.getStyles();
+            var spacing;
 
-            shadow.attachToCursor(diff);
-            shadow.setPosition(rowPosition.minus(new DDTCoords(0, spacing[1])));
+            if (styles['border-collapse'] === 'separate') {
+                spacing = new DDTCoords(0, styles['border-spacing'].split(' ').map(function (n) {
+                    return parseInt(n, 10);
+                })[1]);
+            } else {
+                spacing = new DDTCoords(new DDTElement(this.table.element.find('tbody')).getLeftPaddingAndBorder() / 2, 0);
+            }
+
+            shadow.attachToCursor(diff.add(spacing));
+            shadow.setPosition(rowPosition.minus(spacing));
 
             $(document).one('mouseup', function () {
                 shadow.element.remove();
