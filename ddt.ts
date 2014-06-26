@@ -221,9 +221,13 @@ class DDTElement {
         return dimensions;
     }
 
+    offset() {
+        return this.element.offset() || { top : 0, left : 0 };
+    }
+
     calculateBounds(parent : DDTElement) {
-        var ourOffset    = this.element.offset();
-        var parentOffset = parent.element.offset();
+        var ourOffset    = this.offset();
+        var parentOffset = parent.offset();
 
         var ourDimensions    = this.dimensions(true);
         var parentDimensions = parent.dimensions(true);
