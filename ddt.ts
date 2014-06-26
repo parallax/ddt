@@ -174,7 +174,7 @@ class DDTElement {
     }
 
     getStyles() {
-        return window.getComputedStyle(this.getNode());
+        return DDTElement.getStyles(this.getNode());
     }
 
     cloneStyles(element : DDTElement) {
@@ -182,11 +182,23 @@ class DDTElement {
     }
 
     applyStyles(styles : CSSStyleDeclaration) {
-        this.element.attr('style', styles.cssText);
+        DDTElement.applyStyles(this.getNode(), styles);
     }
 
     getLeftPaddingAndBorder() {
         return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
+    }
+
+    static applyStyles(element : Element, styles : CSSStyleDeclaration) {
+        element.setAttribute('style', styles.cssText);
+    }
+
+    static getStyles(element : Element) {
+        return window.getComputedStyle(element);
+    }
+
+    static cloneStyles(element : Element, clone : Element) {
+        DDTElement.applyStyles(clone, DDTElement.getStyles(element));
     }
 }
 
@@ -282,11 +294,15 @@ class DDTShadowTable extends DDTTable {
     constructor(element : JQuery) {
         super(element);
 
+        if (!element.find('tbody').length) {
+            $(document.createElement('tbody')).appendTo(element);
+        }
+
         element.addClass(DDTCSS.shadowTable);
     }
 
     setShadowRow(row : DDTShadowRow) {
-        this.element.append(row.element);
+        this.element.find('tbody').append(row.element);
         this.row = row;
     }
 }
