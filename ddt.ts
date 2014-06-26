@@ -1,11 +1,14 @@
 /// <reference path='./typings/jquery/jquery.d.ts' />
 /// <reference path='./typings/lodash/lodash.d.ts' />
 
+import $ = require('jquery');
+import _ = require('lodash');
+
 interface Window {
     getMatchedCSSRules(element : Element) : CSSRuleList;
 }
 
-interface Event {
+export interface Event {
     pageX : number;
     pageY : number;
 }
@@ -15,7 +18,7 @@ class DDTEvents {
     static reorder        = 'ddt.order';
 }
 
-class DDTEventEmitter {
+export class DDTEventEmitter {
     private handlers = {};
 
     public on(event : string, handler : Function) {
@@ -31,9 +34,9 @@ class DDTEventEmitter {
     }
 }
 
-enum DDTCoordsAxis { X, Y };
+export enum DDTCoordsAxis { X, Y };
 
-class DDTCoords {
+export class DDTCoords {
 
     x : number;
     y : number;
@@ -272,7 +275,7 @@ class DDTShadowTable extends DDTTable {
     }
 }
 
-class DragAndDropTable {
+export class DragAndDropTable {
 
     public emitter : DDTEventEmitter;
 
