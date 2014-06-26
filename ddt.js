@@ -174,7 +174,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTElement.prototype.getStyles = function () {
-            return window.getComputedStyle(this.getNode());
+            return DDTElement.getStyles(this.getNode());
         };
 
         DDTElement.prototype.cloneStyles = function (element) {
@@ -182,11 +182,23 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTElement.prototype.applyStyles = function (styles) {
-            this.element.attr('style', styles.cssText);
+            DDTElement.applyStyles(this.getNode(), styles);
         };
 
         DDTElement.prototype.getLeftPaddingAndBorder = function () {
             return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
+        };
+
+        DDTElement.applyStyles = function (element, styles) {
+            element.setAttribute('style', styles.cssText);
+        };
+
+        DDTElement.getStyles = function (element) {
+            return window.getComputedStyle(element);
+        };
+
+        DDTElement.cloneStyles = function (element, clone) {
+            DDTElement.applyStyles(clone, DDTElement.getStyles(element));
         };
         return DDTElement;
     })();
@@ -293,10 +305,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DDTShadowTable(element) {
             _super.call(this, element);
 
+            if (!element.find('tbody').length) {
+                $(document.createElement('tbody')).appendTo(element);
+            }
+
             element.addClass(DDTCSS.shadowTable);
         }
         DDTShadowTable.prototype.setShadowRow = function (row) {
-            this.element.append(row.element);
+            this.element.find('tbody').append(row.element);
             this.row = row;
         };
         return DDTShadowTable;
