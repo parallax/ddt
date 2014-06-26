@@ -392,7 +392,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     exports.DragAndDropTable = DragAndDropTable;
 
     DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden' });
-    DDTCSS.defineClass(DDTCSS.shadowTable, { position: 'absolute !important' });
+    DDTCSS.defineClass(DDTCSS.shadowTable, { position: 'absolute !important', zIndex: 999999 });
     DDTCSS.defineClass(DDTCSS.shadowRow, { position: 'relative !important ' });
     DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
         WebkitUserSelect: 'none',
