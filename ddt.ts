@@ -287,6 +287,8 @@ export class DragAndDropTable {
 
     private table : DDTTable;
 
+    private enabled = true;
+
     constructor(table : JQuery) {
         this.table   = new DDTTable(table);
         this.emitter = new DDTEventEmitter();
@@ -294,9 +296,21 @@ export class DragAndDropTable {
         this.wireEvents();
     }
 
+    enable() {
+        this.enabled = true;
+    }
+
+    disable() {
+        this.enabled = false;
+    }
+
+    toggleEnabled() {
+        this.enabled ? this.disable() : this.enable();
+    }
+
     wireEvents() {
         this.table.element.on('mousedown', 'tbody tr', e => {
-            if (e.which === 1) {
+            if (this.enabled && e.which === 1) {
                 this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e))
             }
         });

@@ -294,15 +294,28 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
+            this.enabled = true;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
 
             this.wireEvents();
         }
+        DragAndDropTable.prototype.enable = function () {
+            this.enabled = true;
+        };
+
+        DragAndDropTable.prototype.disable = function () {
+            this.enabled = false;
+        };
+
+        DragAndDropTable.prototype.toggleEnabled = function () {
+            this.enabled ? this.disable() : this.enable();
+        };
+
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
             this.table.element.on('mousedown', 'tbody tr', function (e) {
-                if (e.which === 1) {
+                if (_this.enabled && e.which === 1) {
                     _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
                 }
             });

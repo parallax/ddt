@@ -71,6 +71,8 @@
         </tr>
     </tbody>
 </table>
+
+<button id="toggle">Toggle enbabled/display</button>
 <script>
 
     define('jquery', function() { return $; });
@@ -79,6 +81,11 @@
     require(['ddt'], function(ddt) {
 
         var table = new ddt.DragAndDropTable($('table'));
+
+
+        $('#toggle').click(function() {
+            table.toggleEnabled();
+        });
 
         table.emitter.on('ddt.order', function(order) {
             console.log(order);
