@@ -7,6 +7,33 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $, _) {
+    
+
+    /**
+    * An enum representing the two different axis
+    */
+    (function (DDTAxis) {
+        DDTAxis[DDTAxis["X"] = 0] = "X";
+        DDTAxis[DDTAxis["Y"] = 1] = "Y";
+    })(exports.DDTAxis || (exports.DDTAxis = {}));
+    var DDTAxis = exports.DDTAxis;
+    ;
+
+    /**
+    * The result of a bounds calculation.
+    */
+    (function (DDTBoundsResult) {
+        DDTBoundsResult[DDTBoundsResult["LOW"] = 0] = "LOW";
+        DDTBoundsResult[DDTBoundsResult["IN"] = 1] = "IN";
+        DDTBoundsResult[DDTBoundsResult["HIGH"] = 2] = "HIGH";
+    })(exports.DDTBoundsResult || (exports.DDTBoundsResult = {}));
+    var DDTBoundsResult = exports.DDTBoundsResult;
+
+    /**
+    * A mini event emitter
+    *
+    * @todo Look at changing this to one that has already been written?
+    */
     var DDTEventEmitter = (function () {
         function DDTEventEmitter() {
             this.handlers = {};
@@ -29,13 +56,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     })();
     exports.DDTEventEmitter = DDTEventEmitter;
 
-    (function (DDTCoordsAxis) {
-        DDTCoordsAxis[DDTCoordsAxis["X"] = 0] = "X";
-        DDTCoordsAxis[DDTCoordsAxis["Y"] = 1] = "Y";
-    })(exports.DDTCoordsAxis || (exports.DDTCoordsAxis = {}));
-    var DDTCoordsAxis = exports.DDTCoordsAxis;
-    ;
-
+    /**
+    * A class representing coords which we use across the whole library
+    */
     var DDTCoords = (function () {
         function DDTCoords(x, y) {
             this.x = x;
@@ -49,24 +72,32 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return new DDTCoords(this.x + coords.x, this.y + coords.y);
         };
 
-        DDTCoords.prototype.addToAxis = function (size, axisEnum) {
-            if (axisEnum === 0 /* X */) {
+        /**
+        * Add a certain amount to a specific axis
+        */
+        DDTCoords.prototype.addToAxis = function (size, axis) {
+            if (axis === 0 /* X */) {
                 return new DDTCoords(this.x + size, this.y);
             }
 
             return new DDTCoords(this.x, this.y + size);
         };
 
-        DDTCoords.prototype.gt = function (coords, axisEnum) {
-            var axis = DDTCoords.enumToAxis(axisEnum);
-            return this[axis] > coords[axis];
+        DDTCoords.prototype.gt = function (coords, axis) {
+            var key = DDTCoords.enumToAxis(key);
+            return this[key] > coords[key];
         };
 
-        DDTCoords.prototype.lt = function (coords, axisEnum) {
-            var axis = DDTCoords.enumToAxis(axisEnum);
-            return this[axis] < coords[axis];
+        DDTCoords.prototype.lt = function (coords, axis) {
+            var key = DDTCoords.enumToAxis(key);
+            return this[key] < coords[key];
         };
 
+        /**
+        * Calculation taken from jQuery UI sortable.
+        *
+        * Used to calculate if a coords is over another coords by a certain amount
+        */
         DDTCoords.prototype.isOverAxis = function (coords, size, axis) {
             return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
         };
@@ -92,17 +123,32 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     })();
     exports.DDTCoords = DDTCoords;
 
+    /**
+    * Used for managing CSS within the library.
+    *
+    * Using this class we have a nice API for defining new selectors.
+    *
+    * @note This probably doesn't work in any kind of IE, but it's possible for it to by
+    *       using style.innerText directly. We can probably look at using that in the future.
+    */
     var DDTCSS = (function () {
         function DDTCSS() {
         }
+        /**
+        * Define a specific selector with some rules for it
+        */
         DDTCSS.defineSelector = function (selectorName, rules) {
-            var style = document.createElement('style');
+            if (!DDTCSS.styleElement) {
+                DDTCSS.styleElement = document.createElement('style');
 
-            style.appendChild(document.createTextNode(''));
+                // Apparently we need a text node inside the style tag or this won't work.
+                // This hasn't been tessed
+                DDTCSS.styleElement.appendChild(document.createTextNode(''));
 
-            document.head.appendChild(style);
+                document.head.appendChild(DDTCSS.styleElement);
+            }
 
-            var sheet = style.sheet;
+            var sheet = DDTCSS.styleElement.sheet;
             sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
         };
 
@@ -110,6 +156,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return DDTCSS.defineSelector('.' + className, rules);
         };
 
+        /**
+        * Convert an object of rules into a cssText string.
+        */
         DDTCSS.rulesToCSS = function (rules) {
             var _this = this;
             return _.chain(rules).pairs().map(function (p) {
@@ -117,35 +166,37 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             }).flatten().join('').value();
         };
 
+        /**
+        * Convert CamelCase to -camel-case
+        */
         DDTCSS.arrowCase = function (name) {
             return name.replace(/([A-Z])/g, '-$1').toLowerCase();
         };
-        DDTCSS.notVisible = 'DDTNotVisible';
-        DDTCSS.shadowTable = 'DDTShadowTable';
-        DDTCSS.shadowRow = 'DDTShadowRow';
-        DDTCSS.noSelect = 'DDTNoSelect';
         return DDTCSS;
     })();
     exports.DDTCSS = DDTCSS;
 
-    (function (DDTBoundsValue) {
-        DDTBoundsValue[DDTBoundsValue["LOW"] = 0] = "LOW";
-        DDTBoundsValue[DDTBoundsValue["IN"] = 1] = "IN";
-        DDTBoundsValue[DDTBoundsValue["HIGH"] = 2] = "HIGH";
-    })(exports.DDTBoundsValue || (exports.DDTBoundsValue = {}));
-    var DDTBoundsValue = exports.DDTBoundsValue;
-
+    /**
+    * An interface for dealing with elements in our library.
+    *
+    * Has some really useful helper functions
+    */
     var DDTElement = (function () {
         function DDTElement(element) {
             this.element = element;
             this.emitter = new DDTEventEmitter();
         }
+        /**
+        * Get the HTMLElement from the jQuery object
+        */
         DDTElement.prototype.getNode = function () {
             return this.element[0];
         };
 
         /**
-        * @todo This function is too complicated to be self-documenting. Document it.
+        * Swap two elements in the dom
+        *
+        * @see http://stackoverflow.com/a/698440/851985
         */
         DDTElement.prototype.swap = function (element) {
             var ourNode = this.getNode();
@@ -158,114 +209,80 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTElement.prototype.show = function () {
-            this.element.removeClass(DDTCSS.notVisible);
+            this.element.removeClass(DDTElement.notVisible);
         };
 
         DDTElement.prototype.hide = function () {
-            this.element.addClass(DDTCSS.notVisible);
+            this.element.addClass(DDTElement.notVisible);
         };
 
         DDTElement.prototype.notSelectable = function () {
-            this.element.addClass(DDTCSS.noSelect);
+            this.element.addClass(DDTElement.noSelect);
         };
 
         DDTElement.prototype.selectable = function () {
-            this.element.removeClass(DDTCSS.noSelect);
+            this.element.removeClass(DDTElement.noSelect);
         };
 
-        DDTElement.prototype.getStyles = function () {
-            return DDTElement.getStyles(this.getNode());
+        /**
+        * Get the amount of padding and border an element has on its left side
+        */
+        DDTElement.getLeftPaddingAndBorder = function (element) {
+            return parseInt(element.css('border-left-width') || '0', 10) + parseInt(element.css('border-top-width') || '0', 10);
         };
 
-        DDTElement.prototype.cloneStyles = function (element) {
-            this.applyStyles(element.getStyles());
+        /**
+        * Get the offset top of an element from a parent, taking into account that jQuery may return
+        * undefined.
+        */
+        DDTElement.prototype.offsetTop = function () {
+            return (this.element.offset() || { top: 0 }).top;
         };
 
-        DDTElement.prototype.applyStyles = function (styles) {
-            DDTElement.applyStyles(this.getNode(), styles);
-        };
-
-        DDTElement.prototype.getLeftPaddingAndBorder = function () {
-            return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
-        };
-
-        DDTElement.prototype.dimensions = function (outer) {
-            if (typeof outer === "undefined") { outer = false; }
-            var dimensions = {
-                width: 0,
-                height: 0
-            };
-
-            if (outer) {
-                dimensions.width = this.element.outerWidth();
-                dimensions.height = this.element.outerHeight();
-            } else {
-                dimensions.width = this.element.width();
-                dimensions.height = this.element.height();
-            }
-
-            return dimensions;
-        };
-
-        DDTElement.prototype.offset = function () {
-            return this.element.offset() || { top: 0, left: 0 };
-        };
-
-        DDTElement.prototype.calculateBounds = function (parent, diffX, diffY) {
-            if (typeof diffX === "undefined") { diffX = 0; }
+        /**
+        * Calculate if an element is in the bounds of its parent
+        */
+        DDTElement.prototype.calculateBounds = function (parent, diffY) {
             if (typeof diffY === "undefined") { diffY = 0; }
-            var ourOffset = this.offset();
-            var parentOffset = parent.offset();
+            // Just some calculations
+            var ourOffset = this.offsetTop();
+            var ourHeight = this.element.outerHeight();
+            var parentOffset = parent.offsetTop();
+            var parentHeight = parent.element.outerHeight();
 
-            var ourDimensions = this.dimensions(true);
-            var parentDimensions = parent.dimensions(true);
-
-            var bounds = {
-                x: null,
-                y: null
-            };
-
-            if (ourOffset.top < parentOffset.top) {
-                bounds.y = 0 /* LOW */;
-            } else {
-                if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
-                    bounds.y = 1 /* IN */;
-                } else {
-                    bounds.y = 2 /* HIGH */;
-                }
+            if (ourOffset < parentOffset) {
+                return 0 /* LOW */;
             }
 
-            if (ourOffset.left < parentOffset.left) {
-                bounds.x = 0 /* LOW */;
-            } else {
-                if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
-                    bounds.x = 1 /* IN */;
-                } else {
-                    bounds.x = 2 /* HIGH */;
-                }
+            if (ourOffset + ourHeight < parentOffset + parentHeight + diffY) {
+                return 1 /* IN */;
             }
 
-            return bounds;
+            return 2 /* HIGH */;
         };
 
+        /**
+        * Deep clone an element, with the ability to ignore elements
+        */
         DDTElement.prototype.clone = function (ignoreElements) {
             if (typeof ignoreElements === "undefined") { ignoreElements = []; }
             var cloneFn = function (el) {
                 var clone = $(document.createElement(el[0].tagName));
+                var children = el.children();
 
                 DDTElement.cloneUniqueStyles(el[0], clone[0]);
 
-                if (!el.children().length) {
+                if (!children.length) {
+                    // If we have no children, just set our text value. This is usually for table cells.
                     clone.text(el.text());
+                } else {
+                    el.children().each(function (idx, cEl) {
+                        // If we've not been told to ignore this element, clone it and append it to the parent
+                        if (ignoreElements.indexOf(cEl) === -1) {
+                            clone.append(cloneFn($(cEl)));
+                        }
+                    });
                 }
-
-                el.children().each(function (idx, cEl) {
-                    if (ignoreElements.indexOf(cEl) > -1) {
-                        return;
-                    }
-
-                    clone.append(cloneFn($(cEl)));
-                });
 
                 return clone;
             };
@@ -273,17 +290,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return new DDTElement(cloneFn(this.element));
         };
 
-        DDTElement.applyStyles = function (element, styles) {
-            element.setAttribute('style', styles.cssText);
-        };
-
-        DDTElement.applyStyleRules = function (element, styleRules) {
-            element.setAttribute('style', DDTCSS.rulesToCSS(styleRules));
-        };
-
-        DDTElement.getUniqueStyles = function (element) {
-            var ourStyles = DDTElement.getStyles(element);
-
+        DDTElement.getUniqueStyles = function (element, ignore) {
+            if (typeof ignore === "undefined") { ignore = []; }
+            var ourStyles = window.getComputedStyle(element);
             var dummy = document.createElement(element.tagName);
             document.body.appendChild(dummy);
 
@@ -293,13 +302,15 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 var k = DDTCSS.arrowCase(p[0]);
                 var v = p[1];
 
-                if (dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k) || !ourStyles.getPropertyValue(k)) {
+                if (!ourStyles.getPropertyValue(k) || dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k)) {
                     return null;
                 }
 
                 return p;
             }).filter(function (p) {
                 return !!p;
+            }).filter(function (p) {
+                return ignore.indexOf(p[0]) === -1;
             }).value();
 
             dummy.parentNode.removeChild(dummy);
@@ -307,17 +318,18 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return _.object(pairs);
         };
 
-        DDTElement.getStyles = function (element) {
-            return window.getComputedStyle(element);
-        };
-
         DDTElement.cloneStyles = function (element, clone) {
-            DDTElement.applyStyles(clone, DDTElement.getStyles(element));
+            clone.setAttribute('style', window.getComputedStyle(element).cssText);
         };
 
-        DDTElement.cloneUniqueStyles = function (element, clone) {
-            DDTElement.applyStyleRules(clone, DDTElement.getUniqueStyles(element));
+        DDTElement.cloneUniqueStyles = function (element, clone, ignore) {
+            if (typeof ignore === "undefined") { ignore = []; }
+            clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
         };
+        DDTElement.notVisible = 'DDTNotVisible';
+        DDTElement.shadowTable = 'DDTShadowTable';
+        DDTElement.shadowRow = 'DDTShadowRow';
+        DDTElement.noSelect = 'DDTNoSelect';
         return DDTElement;
     })();
     exports.DDTElement = DDTElement;
@@ -331,7 +343,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         * @todo This is far too messy, clean it up
         * @param diff
         */
-        DDTPositionableElement.prototype.attachToCursor = function (diff) {
+        DDTPositionableElement.prototype.attachToCursor = function (container, diff) {
             var _this = this;
             if (typeof diff === "undefined") { diff = null; }
             var bodyElement = new DDTElement($('body'));
@@ -348,10 +360,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 _this.setPosition(position);
             };
 
-            var $doc = $(document);
-
-            $doc.on('mousemove', updateFunction).one('mouseup', function () {
-                $doc.off('mousemove', updateFunction);
+            container.on('mousemove', updateFunction).one('mouseup', function () {
+                container.off('mousemove', updateFunction);
                 bodyElement.selectable();
             });
         };
@@ -382,7 +392,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DDTShadowRow(element) {
             _super.call(this, element);
 
-            element.addClass(DDTCSS.shadowRow);
+            element.addClass(DDTElement.shadowRow);
         }
         return DDTShadowRow;
     })(DDTRow);
@@ -394,26 +404,28 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             _super.apply(this, arguments);
         }
         DDTTable.prototype.createShadow = function (row) {
+            var clonedRow = row.clone();
             var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
             var shadowTable = new DDTShadowTable(clonedTable.element);
-
-            var clonedRow = row.clone();
             var shadowRow = new DDTShadowRow(clonedRow.element);
-
-            shadowTable.element.css('height', 'auto');
-
             var width = this.element.outerWidth();
 
             if (this.element.css('border-collapse') === 'collapse') {
-                width += new DDTElement(this.element.find('tbody')).getLeftPaddingAndBorder();
+                width += DDTElement.getLeftPaddingAndBorder(this.element.find('tbody'));
             }
 
+            shadowTable.element.css('height', 'auto');
             shadowTable.element.width(width);
+
             shadowTable.setShadowRow(shadowRow);
 
-            DDTElement.cloneUniqueStyles(this.element.find('tbody')[0], shadowTable.element.find('tbody')[0]);
+            DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
             return shadowTable;
+        };
+
+        DDTTable.prototype.getTbody = function () {
+            return this.element.find('tbody')[0];
         };
         return DDTTable;
     })(DDTPositionableElement);
@@ -428,7 +440,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 $(document.createElement('tbody')).appendTo(element);
             }
 
-            element.addClass(DDTCSS.shadowTable);
+            element.addClass(DDTElement.shadowTable);
         }
         DDTShadowTable.prototype.setShadowRow = function (row) {
             this.element.find('tbody').append(row.element);
@@ -444,33 +456,30 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this.scrolling = false;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
-
             this.window = new DDTElement($(window));
+            this.$document = $(document);
 
             this.wireEvents();
         }
         DragAndDropTable.prototype.enable = function () {
             this.enabled = true;
         };
-
         DragAndDropTable.prototype.disable = function () {
             this.enabled = false;
         };
-
         DragAndDropTable.prototype.toggleEnabled = function () {
             this.enabled ? this.disable() : this.enable();
         };
 
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
-            this.table.element.on('mousedown', 'tbody tr', function (e) {
+            this.table.element.on('mousedown', DragAndDropTable.rowSelector, function (e) {
                 if (_this.enabled && e.which === 1) {
                     _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
                 }
             });
         };
 
-        // @todo This is far too messy. Clean it up
         DragAndDropTable.prototype.dragRow = function (rowElement, mousePosition) {
             var _this = this;
             var row = new DDTRow(rowElement);
@@ -481,83 +490,105 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             row.hide();
 
             shadow.element.appendTo('body');
-
             shadow.emitter.on('ddt.position', function (coords) {
-                _this.handleScrolling(shadow);
-
-                _this.table.element.find('tbody tr').each(function (idx, tr) {
-                    if (tr === row.getNode()) {
-                        return;
-                    }
-
-                    var rowCoords = DDTCoords.fromElement(tr);
-
-                    if (coords.isOverAxis(rowCoords, $(tr).height() / 2, 1 /* Y */)) {
-                        row.swap(new DDTElement($(tr)));
-
-                        row.show();
-                        DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0]);
-                        row.hide();
-
-                        _this.emitter.emit('ddt.order', [
-                            _.map(_this.table.element.find('tbody tr'), function (tr) {
-                                return $(tr).data('value');
-                            })
-                        ]);
-                    }
-                });
+                return _this.dragged(row, shadow, coords);
             });
 
-            var styles = row.getStyles();
+            var styles = window.getComputedStyle(rowElement[0]);
             var spacing;
 
             if (styles['border-collapse'] === 'separate') {
-                spacing = new DDTCoords(0, styles['border-spacing'].split(' ').map(function (n) {
-                    return parseInt(n, 10);
-                })[1]);
+                spacing = [0, styles['border-spacing'].split(' ').map(function (n) {
+                        return parseInt(n, 10);
+                    })[1]];
             } else {
-                spacing = new DDTCoords(new DDTElement(this.table.element.find('tbody')).getLeftPaddingAndBorder() / 2, 0);
+                spacing = [DDTElement.getLeftPaddingAndBorder(this.table.element.find('tbody')) / 2, 0];
             }
 
-            shadow.attachToCursor(diff.add(spacing));
-            shadow.setPosition(rowPosition.minus(spacing));
+            var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
 
-            $(document).one('mouseup', function () {
-                shadow.element.remove();
+            shadow.attachToCursor(this.$document, diff.add(spacingCoords));
+            shadow.setPosition(rowPosition.minus(spacingCoords));
 
-                row.show();
+            this.$document.one('mouseup', function () {
+                return _this.endDrag(row, shadow);
             });
+        };
+
+        DragAndDropTable.prototype.dragged = function (row, shadow, coords) {
+            this.handleScrolling(shadow);
+            this.handleRowSwapping(row, shadow, coords);
+        };
+
+        DragAndDropTable.prototype.endDrag = function (row, shadow) {
+            shadow.element.remove();
+
+            row.show();
+        };
+
+        DragAndDropTable.prototype.handleRowSwapping = function (row, shadow, coords) {
+            var rows = this.table.element.find(DragAndDropTable.rowSelector);
+
+            var res = _.some(rows, function (tr) {
+                // If this is the element we're dragging, we don't want to do any calculations on it
+                if (tr === row.getNode()) {
+                    return;
+                }
+
+                var rowCoords = DDTCoords.fromElement(tr);
+                var $tr = $(tr);
+
+                if (coords.isOverAxis(rowCoords, $tr.height() / 2, 1 /* Y */)) {
+                    row.swap(new DDTElement($tr));
+                    DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
+
+                    return true;
+                }
+            });
+
+            if (res) {
+                this.emitValues(rows);
+            }
+        };
+
+        DragAndDropTable.prototype.emitValues = function (rows) {
+            this.emitter.emit('ddt.order', [
+                _.map(rows, function (tr) {
+                    return $(tr).data('value');
+                })
+            ]);
         };
 
         DragAndDropTable.prototype.handleScrolling = function (shadow) {
             var bounds = shadow.calculateBounds(this.window);
 
-            if (bounds.y === 1 /* IN */) {
+            if (bounds === 1 /* IN */) {
                 return;
             }
 
-            var tableBounds = shadow.calculateBounds(this.table, 0, shadow.row.element.outerHeight());
+            var tableBounds = shadow.calculateBounds(this.table, shadow.row.element.outerHeight());
 
-            if (tableBounds.y !== 1 /* IN */) {
+            if (tableBounds !== 1 /* IN */) {
                 return;
             }
 
-            if (bounds.y === 2 /* HIGH */) {
+            if (bounds === 2 /* HIGH */) {
                 document.body.scrollTop += 5;
             }
 
-            if (bounds.y === 0 /* LOW */) {
+            if (bounds === 0 /* LOW */) {
                 document.body.scrollTop -= 5;
             }
         };
+        DragAndDropTable.rowSelector = 'tbody tr';
         return DragAndDropTable;
     })();
     exports.DragAndDropTable = DragAndDropTable;
 
-    DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden' });
-    DDTCSS.defineClass(DDTCSS.shadowTable, { position: 'absolute !important', zIndex: 999999 });
-    DDTCSS.defineClass(DDTCSS.shadowRow, { position: 'relative !important ' });
-    DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
+    DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
+    DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
+    DDTCSS.defineClass(DDTElement.shadowRow, { position: 'relative !important ' });
+    DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
         WebkitUserSelect: 'none',
         MsUserSelect: 'none',
         OUserSelect: 'none',

@@ -4,11 +4,30 @@
 import $ = require('jquery');
 import _ = require('lodash');
 
+/**
+ * lib.d.ts doesn't include these properties on event for some reason.
+ */
 export interface Event {
     pageX : number;
     pageY : number;
 }
 
+/**
+ * An enum representing the two different axis
+ */
+export enum DDTAxis { X, Y };
+
+
+/**
+ * The result of a bounds calculation.
+ */
+export enum DDTBoundsResult { LOW, IN, HIGH }
+
+/**
+ * A mini event emitter
+ *
+ * @todo Look at changing this to one that has already been written? 
+ */
 export class DDTEventEmitter {
     private handlers = {};
 
@@ -25,8 +44,9 @@ export class DDTEventEmitter {
     }
 }
 
-export enum DDTCoordsAxis { X, Y };
-
+/**
+ * A class representing coords which we use across the whole library
+ */
 export class DDTCoords {
 
     x : number;
@@ -45,25 +65,33 @@ export class DDTCoords {
         return new DDTCoords(this.x + coords.x, this.y + coords.y);
     }
 
-    addToAxis(size : number, axisEnum : DDTCoordsAxis) {
-        if (axisEnum === DDTCoordsAxis.X) {
+    /**
+     * Add a certain amount to a specific axis
+     */
+    addToAxis(size : number, axis : DDTAxis) {
+        if (axis === DDTAxis.X) {
             return new DDTCoords(this.x + size, this.y);
         }
 
         return new DDTCoords(this.x, this.y + size);
     }
 
-    gt(coords : DDTCoords, axisEnum: DDTCoordsAxis) {
-        var axis = DDTCoords.enumToAxis(axisEnum);
-        return this[axis] > coords[axis];
+    gt(coords : DDTCoords, axis: DDTAxis) {
+        var key = DDTCoords.enumToAxis(key);
+        return this[key] > coords[key];
     }
 
-    lt(coords : DDTCoords, axisEnum : DDTCoordsAxis) {
-        var axis = DDTCoords.enumToAxis(axisEnum);
-        return this[axis] < coords[axis];
+    lt(coords : DDTCoords, axis : DDTAxis) {
+        var key = DDTCoords.enumToAxis(key);
+        return this[key] < coords[key];
     }
 
-    isOverAxis(coords : DDTCoords, size : number, axis : DDTCoordsAxis) {
+    /**
+     * Calculation taken from jQuery UI sortable.
+     *
+     * Used to calculate if a coords is over another coords by a certain amount
+     */
+    isOverAxis(coords : DDTCoords, size : number, axis : DDTAxis) {
         return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
     }
 
@@ -81,25 +109,38 @@ export class DDTCoords {
         return new DDTCoords(offset.left, offset.top);
     }
 
-    private static enumToAxis(axis : DDTCoordsAxis) {
-        return axis === DDTCoordsAxis.X ? 'x' : 'y';
+    private static enumToAxis(axis : DDTAxis) {
+        return axis === DDTAxis.X ? 'x' : 'y';
     }
 }
 
+/**
+ * Used for managing CSS within the library.
+ *
+ * Using this class we have a nice API for defining new selectors. 
+ *
+ * @note This probably doesn't work in any kind of IE, but it's possible for it to by
+ *       using style.innerText directly. We can probably look at using that in the future.
+ */
 export class DDTCSS {
-    static notVisible  = 'DDTNotVisible';
-    static shadowTable = 'DDTShadowTable';
-    static shadowRow   = 'DDTShadowRow';
-    static noSelect    = 'DDTNoSelect';
 
+    private static styleElement : HTMLStyleElement;
+
+    /**
+     * Define a specific selector with some rules for it
+     */
     static defineSelector(selectorName : string, rules : Object) {
-        var style = document.createElement('style');
+        if (!DDTCSS.styleElement) {
+            DDTCSS.styleElement = document.createElement('style');
+            // Apparently we need a text node inside the style tag or this won't work.
+            // This hasn't been tessed
+            DDTCSS.styleElement.appendChild(document.createTextNode(''));
 
-        style.appendChild(document.createTextNode(''));
+            document.head.appendChild(DDTCSS.styleElement);
+        }
 
-        document.head.appendChild(style);
 
-        var sheet = <CSSStyleSheet> style.sheet;
+        var sheet = <CSSStyleSheet> DDTCSS.styleElement.sheet;
         sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
     }
 
@@ -107,6 +148,9 @@ export class DDTCSS {
         return DDTCSS.defineSelector('.' + className, rules);
     }
 
+    /**
+     * Convert an object of rules into a cssText string.   
+     */
     static rulesToCSS(rules : Object) : string {
         return _.chain(rules)
             .pairs()
@@ -116,22 +160,26 @@ export class DDTCSS {
         .value();
     }
 
+    /**
+     * Convert CamelCase to -camel-case
+     */
     static arrowCase(name : string) {
         return name.replace(/([A-Z])/g, '-$1').toLowerCase();
     }
 }
 
-
-export enum DDTBoundsValue {
-    LOW, IN, HIGH
-}
-
-export interface DDTBounds {
-    x  : DDTBoundsValue;
-    y  : DDTBoundsValue;
-}
-
+/**
+ * An interface for dealing with elements in our library.
+ * 
+ * Has some really useful helper functions
+ */
 export class DDTElement {
+
+    // Some class names
+    static notVisible  = 'DDTNotVisible';
+    static shadowTable = 'DDTShadowTable';
+    static shadowRow   = 'DDTShadowRow';
+    static noSelect    = 'DDTNoSelect';
 
     element : JQuery;
     emitter : DDTEventEmitter;
@@ -141,12 +189,17 @@ export class DDTElement {
         this.emitter = new DDTEventEmitter();
     }
 
-    getNode() {
+    /**
+     * Get the HTMLElement from the jQuery object
+     */
+    getNode() : HTMLElement {
         return this.element[0];
     }
 
     /**
-     * @todo This function is too complicated to be self-documenting. Document it.
+     * Swap two elements in the dom
+     *
+     * @see http://stackoverflow.com/a/698440/851985
      */
     swap(element : DDTElement) {
         var ourNode       = this.getNode();
@@ -159,112 +212,81 @@ export class DDTElement {
     }
 
     show() {
-        this.element.removeClass(DDTCSS.notVisible);
+        this.element.removeClass(DDTElement.notVisible);
     }
 
     hide() {
-        this.element.addClass(DDTCSS.notVisible);
+        this.element.addClass(DDTElement.notVisible);
     }
 
     notSelectable() {
-        this.element.addClass(DDTCSS.noSelect);
+        this.element.addClass(DDTElement.noSelect);
     }
 
     selectable() {
-        this.element.removeClass(DDTCSS.noSelect);
+        this.element.removeClass(DDTElement.noSelect);
     }
 
-    getStyles() {
-        return DDTElement.getStyles(this.getNode());
+    /**
+     * Get the amount of padding and border an element has on its left side
+     */
+    static getLeftPaddingAndBorder(element : JQuery) : number {
+        return parseInt(element.css('border-left-width') || '0', 10) +
+               parseInt(element.css('border-top-width') || '0', 10);
     }
 
-    cloneStyles(element : DDTElement) {
-        this.applyStyles(element.getStyles());
+    /**
+     * Get the offset top of an element from a parent, taking into account that jQuery may return
+     * undefined.
+     */
+    offsetTop() {
+        return (this.element.offset() || { top : 0  }).top;
     }
 
-    applyStyles(styles : CSSStyleDeclaration) {
-        DDTElement.applyStyles(this.getNode(), styles);
-    }
+    /**
+     * Calculate if an element is in the bounds of its parent
+     */
+    calculateBounds(parent : DDTElement, diffY : number = 0) : DDTBoundsResult {
+        // Just some calculations
+        var ourOffset    = this.offsetTop();
+        var ourHeight    = this.element.outerHeight();
+        var parentOffset = parent.offsetTop();
+        var parentHeight = parent.element.outerHeight();
 
-    getLeftPaddingAndBorder() {
-        return parseInt(this.element.css('border-left-width') || '0', 10) + parseInt(this.element.css('border-top-width') || '0', 10);
-    }
-
-    dimensions(outer : boolean = false) : { width : number; height: number; } {
-        var dimensions = {
-            width  : 0,
-            height : 0
-        };
-
-        if (outer) {
-            dimensions.width  = this.element.outerWidth();
-            dimensions.height = this.element.outerHeight();
-        } else {
-            dimensions.width  = this.element.width();
-            dimensions.height = this.element.height();
+        if (ourOffset < parentOffset) {
+            return DDTBoundsResult.LOW;
         }
 
-        return dimensions;
-    }
-
-    offset() {
-        return this.element.offset() || { top : 0, left : 0 };
-    }
-
-    calculateBounds(parent : DDTElement, diffX : number = 0, diffY : number = 0) : DDTBounds {
-        var ourOffset    = this.offset();
-        var parentOffset = parent.offset();
-
-        var ourDimensions    = this.dimensions(true);
-        var parentDimensions = parent.dimensions(true);
-
-        var bounds : DDTBounds = {
-            x : null,
-            y : null
-        };
-
-        if (ourOffset.top < parentOffset.top) {
-            bounds.y = DDTBoundsValue.LOW;
-        } else {
-            if (ourOffset.top + ourDimensions.height < parentOffset.top + parentDimensions.height + diffY) {
-                bounds.y = DDTBoundsValue.IN;
-            } else {
-                bounds.y = DDTBoundsValue.HIGH;
-            }
+        if (ourOffset + ourHeight < parentOffset + parentHeight + diffY) {
+            return DDTBoundsResult.IN;
         }
 
-        if (ourOffset.left < parentOffset.left) {
-            bounds.x = DDTBoundsValue.LOW;
-        } else {
-            if (ourOffset.left + ourDimensions.width < parentOffset.left + parentDimensions.width) {
-                bounds.x = DDTBoundsValue.IN;
-            } else {
-                bounds.x = DDTBoundsValue.HIGH;
-            }
-        }
-
-        return bounds;
+        return DDTBoundsResult.HIGH;
     }
 
+    /**
+     * Deep clone an element, with the ability to ignore elements
+     */
     clone(ignoreElements : Element[] = []) : DDTElement {
 
         var cloneFn = (el : JQuery) => {
             var clone = $(document.createElement(el[0].tagName));
+            var children = el.children();
 
             DDTElement.cloneUniqueStyles(el[0], clone[0]);
 
-            if (!el.children().length) {
+            if (!children.length) {
+                // If we have no children, just set our text value. This is usually for table cells.
                 clone.text(el.text());
+            } else {
+
+                el.children().each((idx, cEl) => {
+                    // If we've not been told to ignore this element, clone it and append it to the parent
+                    if (ignoreElements.indexOf(cEl) === -1) {
+                        clone.append(cloneFn($(cEl)));
+                    }                    
+                });
             }
-
-            el.children().each((idx, cEl) => {
-
-                if (ignoreElements.indexOf(cEl) > -1) {
-                    return;
-                }
-
-                clone.append(cloneFn($(cEl)));
-            });
 
             return clone;
         }
@@ -272,18 +294,9 @@ export class DDTElement {
         return new DDTElement(cloneFn(this.element));
     }
 
-    static applyStyles(element : Element, styles : CSSStyleDeclaration) {
-        element.setAttribute('style', styles.cssText);
-    }
-
-    static applyStyleRules(element : Element, styleRules : Object) {
-        element.setAttribute('style', DDTCSS.rulesToCSS(styleRules));
-    }
-
-    static getUniqueStyles(element : Element) : Object {
-        var ourStyles = DDTElement.getStyles(element);
-        
-        var dummy = document.createElement(element.tagName);
+    static getUniqueStyles(element : Element, ignore : string[] = []) : Object {
+        var ourStyles = window.getComputedStyle(element);
+        var dummy     = document.createElement(element.tagName);
         document.body.appendChild(dummy);
 
         var dummyStyles = window.getComputedStyle(dummy);
@@ -294,13 +307,14 @@ export class DDTElement {
                 var k = DDTCSS.arrowCase(p[0]);
                 var v = p[1];
 
-                if (dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k) || !ourStyles.getPropertyValue(k)) {
+                if (!ourStyles.getPropertyValue(k) || dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k)) {
                     return null;
                 }
 
                 return p;
             })
             .filter(p => !!p)
+            .filter(p => ignore.indexOf(p[0]) === -1)
         .value();
 
         dummy.parentNode.removeChild(dummy);
@@ -308,16 +322,12 @@ export class DDTElement {
         return _.object(pairs);
     }
 
-    static getStyles(element : Element) : CSSStyleDeclaration {
-        return window.getComputedStyle(element);
-    }
-
     static cloneStyles(element : Element, clone : Element) {
-        DDTElement.applyStyles(clone, DDTElement.getStyles(element));
+        clone.setAttribute('style', window.getComputedStyle(element).cssText);
     }
 
-    static cloneUniqueStyles(element : Element, clone : Element) {
-        DDTElement.applyStyleRules(clone, DDTElement.getUniqueStyles(element));
+    static cloneUniqueStyles(element : Element, clone : Element, ignore : string[] = []) {
+        clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
     }
 }
 
@@ -327,7 +337,7 @@ export class DDTPositionableElement extends DDTElement {
      * @todo This is far too messy, clean it up
      * @param diff
      */
-    attachToCursor(diff : DDTCoords = null) {
+    attachToCursor(container : JQuery, diff : DDTCoords = null) {
 
         var bodyElement = new DDTElement($('body'));
 
@@ -343,12 +353,10 @@ export class DDTPositionableElement extends DDTElement {
             this.setPosition(position);
         };
 
-        var $doc = $(document);
-
-        $doc
+        container
             .on('mousemove', updateFunction)
             .one('mouseup', () => {
-                $doc.off('mousemove', updateFunction);
+                container.off('mousemove', updateFunction);
                 bodyElement.selectable();
             });
     }
@@ -370,32 +378,34 @@ export class DDTShadowRow extends DDTRow {
     constructor(element : JQuery) {
         super(element);
 
-        element.addClass(DDTCSS.shadowRow);
+        element.addClass(DDTElement.shadowRow);
     }
 }
 
 export class DDTTable extends DDTPositionableElement {
     createShadow(row : DDTRow) : DDTShadowTable {
+        var clonedRow   = row.clone();
         var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
         var shadowTable = new DDTShadowTable(clonedTable.element);
-
-        var clonedRow = row.clone();
-        var shadowRow = new DDTShadowRow(clonedRow.element);
-
-        shadowTable.element.css('height', 'auto');
-
-        var width = this.element.outerWidth();
+        var shadowRow   = new DDTShadowRow(clonedRow.element);
+        var width       = this.element.outerWidth();
 
         if (this.element.css('border-collapse') === 'collapse') {
-            width += new DDTElement(this.element.find('tbody')).getLeftPaddingAndBorder();
+            width += DDTElement.getLeftPaddingAndBorder(this.element.find('tbody'));
         }
 
+        shadowTable.element.css('height', 'auto');
         shadowTable.element.width(width);
+
         shadowTable.setShadowRow(shadowRow);
 
-        DDTElement.cloneUniqueStyles(this.element.find('tbody')[0], shadowTable.element.find('tbody')[0]);
+        DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
         return shadowTable;
+    }
+
+    getTbody() : Element {
+        return this.element.find('tbody')[0];
     }
 }
 
@@ -410,7 +420,7 @@ export class DDTShadowTable extends DDTTable {
             $(document.createElement('tbody')).appendTo(element);
         }
 
-        element.addClass(DDTCSS.shadowTable);
+        element.addClass(DDTElement.shadowTable);
     }
 
     setShadowRow(row : DDTShadowRow) {
@@ -423,123 +433,133 @@ export class DragAndDropTable {
 
     public emitter : DDTEventEmitter;
 
-    private table : DDTTable;
-    private window : DDTElement;
-    private enabled = true;
+    private table     : DDTTable;
+    private window    : DDTElement;
+    private $document : JQuery;
 
+    private enabled   = true;
     private scrolling = false;
 
-    constructor(table : JQuery) {
-        this.table   = new DDTTable(table);
-        this.emitter = new DDTEventEmitter();
+    private static rowSelector = 'tbody tr';
 
-        this.window = new DDTElement($(window));
+    constructor(table : JQuery) {
+        this.table     = new DDTTable(table);
+        this.emitter   = new DDTEventEmitter();
+        this.window    = new DDTElement($(window));
+        this.$document = $(document);
 
         this.wireEvents();
     }
 
-    enable() {
-        this.enabled = true;
-    }
-
-    disable() {
-        this.enabled = false;
-    }
-
-    toggleEnabled() {
-        this.enabled ? this.disable() : this.enable();
-    }
+    enable()        { this.enabled = true; }
+    disable()       { this.enabled = false; }
+    toggleEnabled() { this.enabled ? this.disable() : this.enable(); }
 
     wireEvents() {
-        this.table.element.on('mousedown', 'tbody tr', e => {
+        this.table.element.on('mousedown', DragAndDropTable.rowSelector, e => {
             if (this.enabled && e.which === 1) {
                 this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e))
             }
         });
     }
 
-    // @todo This is far too messy. Clean it up
     dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
         var row         = new DDTRow(rowElement);
         var shadow      = this.table.createShadow(row);
         var rowPosition = DDTCoords.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
-        
+
         row.hide();
 
         shadow.element.appendTo('body');
+        shadow.emitter.on('ddt.position', coords => this.dragged(row, shadow, coords));
 
-        shadow.emitter.on('ddt.position', (coords : DDTCoords) => {
-            this.handleScrolling(shadow);
-
-            this.table.element.find('tbody tr').each((idx, tr) => {
-
-                if (tr === row.getNode()) {
-                    return;
-                }
-
-                var rowCoords = DDTCoords.fromElement(tr);
-
-                if (coords.isOverAxis(rowCoords, $(tr).height() / 2, DDTCoordsAxis.Y)) {
-                    row.swap(new DDTElement($(tr)));
-
-                    row.show();
-                    DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0]);
-                    row.hide();
-
-                    this.emitter.emit('ddt.order', [
-                        _.map(this.table.element.find('tbody tr'), tr => $(tr).data('value'))
-                    ]);
-                }
-            });
-        });
-
-        var styles  = row.getStyles();
-        var spacing : DDTCoords;
+        var styles  = window.getComputedStyle(rowElement[0]);
+        var spacing : number[];
 
         if (styles['border-collapse'] === 'separate') {
-            spacing = new DDTCoords(0, styles['border-spacing'].split(' ').map(n => parseInt(n, 10))[1]);
+            spacing = [0, styles['border-spacing'].split(' ').map(n => parseInt(n, 10))[1]]
         } else {
-            spacing = new DDTCoords(new DDTElement(this.table.element.find('tbody')).getLeftPaddingAndBorder() / 2, 0);
+            spacing = [DDTElement.getLeftPaddingAndBorder(this.table.element.find('tbody')) / 2, 0];
         }
 
-        shadow.attachToCursor(diff.add(spacing));
-        shadow.setPosition(rowPosition.minus(spacing));
+        var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
 
-        $(document).one('mouseup', () => {
-            shadow.element.remove();
+        shadow.attachToCursor(this.$document, diff.add(spacingCoords));
+        shadow.setPosition(rowPosition.minus(spacingCoords));
 
-            row.show();
+        this.$document.one('mouseup', () => this.endDrag(row, shadow));
+    }
+
+    private dragged(row : DDTRow, shadow : DDTShadowTable, coords : DDTCoords) {
+        this.handleScrolling(shadow);
+        this.handleRowSwapping(row, shadow, coords);
+    }
+
+    private endDrag(row : DDTRow, shadow : DDTShadowTable) {
+        shadow.element.remove();
+
+        row.show();
+    }
+
+    private handleRowSwapping(row : DDTRow, shadow : DDTShadowTable, coords : DDTCoords) {
+        var rows = this.table.element.find(DragAndDropTable.rowSelector);
+
+        var res = _.some(rows, tr => {
+            // If this is the element we're dragging, we don't want to do any calculations on it
+            if (tr === row.getNode()) {
+                return;
+            }
+
+            var rowCoords = DDTCoords.fromElement(tr);
+            var $tr       = $(tr);
+
+            if (coords.isOverAxis(rowCoords, $tr.height() / 2, DDTAxis.Y)) {
+                row.swap(new DDTElement($tr));
+                DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
+
+                return true;
+            }
         });
+
+        if (res) {
+            this.emitValues(rows);
+        }
+    }
+
+    private emitValues(rows : JQuery) {
+        this.emitter.emit('ddt.order', [
+            _.map(rows, tr => $(tr).data('value'))
+        ]);
     }
 
     private handleScrolling(shadow : DDTShadowTable) {
         var bounds = shadow.calculateBounds(this.window);
 
-        if (bounds.y === DDTBoundsValue.IN) {
+        if (bounds === DDTBoundsResult.IN) {
             return;
         }
 
-        var tableBounds = shadow.calculateBounds(this.table, 0, shadow.row.element.outerHeight());
+        var tableBounds = shadow.calculateBounds(this.table, shadow.row.element.outerHeight());
 
-        if (tableBounds.y !== DDTBoundsValue.IN) {
+        if (tableBounds !== DDTBoundsResult.IN) {
             return;
         }
 
-        if (bounds.y === DDTBoundsValue.HIGH) {
+        if (bounds === DDTBoundsResult.HIGH) {
             document.body.scrollTop += 5;
         }
 
-        if (bounds.y === DDTBoundsValue.LOW) {
+        if (bounds === DDTBoundsResult.LOW) {
             document.body.scrollTop -= 5;
         }
     }
 }
 
-DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden'});
-DDTCSS.defineClass(DDTCSS.shadowTable, { position : 'absolute !important', zIndex: 999999 });
-DDTCSS.defineClass(DDTCSS.shadowRow, { position : 'relative !important ' });
-DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
+DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
+DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
+DDTCSS.defineClass(DDTElement.shadowRow, { position : 'relative !important ' });
+DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
     WebkitUserSelect : 'none',
     MsUserSelect     : 'none',
     OUserSelect      : 'none',
