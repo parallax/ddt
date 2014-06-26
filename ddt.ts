@@ -10,11 +10,6 @@ interface Event {
     pageY : number;
 }
 
-interface DDTPosition {
-    top  : number;
-    left : number;
-}
-
 class DDTCoords {
 
     x : number;
