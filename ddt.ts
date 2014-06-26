@@ -5,164 +5,52 @@ interface Window {
     getMatchedCSSRules(element : Element) : CSSRuleList;
 }
 
-interface DDTPosition {
-    top  : number;
-    left : number;
-}
-
 interface Event {
     pageX : number;
     pageY : number;
 }
 
-class DDT {
+interface DDTPosition {
+    top  : number;
+    left : number;
+}
 
-    private $element    : JQuery;
-    private $clone      : JQuery;
-    private $currentRow : JQuery;
+class DDTCoords {
 
-    private diff : DDTPosition;
+    x : number;
+    y : number;
 
-    private borderSpacing : DDTPosition;
-
-    static DDTNotVisibleClass = 'DDTNotVisible';
-    static CloneElementClass = 'DDTCloneElementClass';
-    static NoSelectClass = 'DDTNoSelectClass';
-
-    constructor(private element : Element) {
-        this.$element = $(this.element);
-
-        this.wireEvents();
+    constructor(x : number, y : number) {
+        this.x = x;
+        this.y = y;
     }
 
-    wireEvents() {
-        this.$element.on('mousedown', 'tr', (e : any) => this.startDrag(e.currentTarget, DDT.eventToPosition(e)));
+    minus(coords : DDTCoords) {
+        return new DDTCoords(this.x - coords.x, this.y - coords.y);
     }
 
-    startDrag(row : HTMLElement, position : DDTPosition) {
-        $(document)
-            .one('mouseup',   this.endDrag)
-            .on('mousemove', this.mousemove);
-
-        DDT.clearSelection();
-
-        this.$currentRow = $(row);
-        var offset = this.$currentRow.offset();
-        var computed = window.getComputedStyle(row);
-        var spacing = computed['border-spacing'].split(' ').map(n => parseInt(n, 10));
-
-        this.diff = {
-            top  : position.top - offset.top + spacing[1],
-            left : position.left - offset.left
-        };
-
-        var clone = DDT.cloneElement(row, computed);
-
-        this.$clone = $(clone);
-        this.$clone.addClass(DDT.CloneElementClass);
-        this.$clone.appendTo('body');
-
-        this.updateClonePosition(position);
-
-        this.hideCurrentRow();
-        $('body').addClass(DDT.NoSelectClass);
+    static fromEvent(event : Event) {
+        return new DDTCoords(event.pageX, event.pageY);
     }
 
-    updateClonePosition(position : DDTPosition) {
-        this.$clone.css({
-            top : position.top   - this.diff.top  + 'px',
-            left : position.left - this.diff.left + 'px'
-        });
+    static fromElement(element : Element) {
+        return DDTCoords.fromJQuery($(element));
     }
 
-    showCurrentRow() {
-        DDT.showElement(this.$currentRow);
+    static fromJQuery(jquery : JQuery) {
+        var offset = jquery.offset();
+
+        return new DDTCoords(offset.left, offset.top);
     }
+}
 
-    hideCurrentRow() {
-        DDT.hideElement(this.$currentRow);
-    }
+class DDTCSS {
+    static notVisible  = 'DDTNotVisible';
+    static shadowTable = 'DDTShadowTable';
+    static shadowRow   = 'DDTShadowRow';
+    static noSelect    = 'DDTNoSelect';
 
-    mousemove = (e) => {
-        var pos = DDT.eventToPosition(e);
-        this.updateClonePosition(pos);
-//
-//        var tablePosition = this.$element.offset();
-//
-//        this.$element.find('tr').each((i, row) => {
-//
-//            if (pos.top < $(row).position().top && false) {
-//                $(row).before(this.$currentRow)
-//
-//                this.showCurrentRow();
-//                DDT.cloneStyles(this.$currentRow[0], this.$clone.find('tr')[0]);
-//                this.hideCurrentRow();
-//            }
-//        });
-    }
-
-    endDrag = ()  => {
-        $(document).off('mousemove', this.mousemove);
-        $('body').removeClass(DDT.NoSelectClass);
-
-        this.$clone.remove();
-        this.$clone = null;
-
-        this.showCurrentRow();
-        this.$currentRow = null;
-
-        this.diff = null;
-    };
-
-    private static showElement(row : JQuery) {
-        row.removeClass(DDT.DDTNotVisibleClass);
-    }
-
-    private static hideElement(row : JQuery) {
-        row.addClass(DDT.DDTNotVisibleClass);
-    }
-
-    private static clearSelection() {
-        if (window.getSelection) {
-            window.getSelection().removeAllRanges();
-        } else if (document.selection) {
-            document.selection.empty();
-        }
-    }
-
-    private static eventToPosition(e : Event) : DDTPosition {
-        return {
-            top  : e.pageY,
-            left : e.pageX
-        };
-    }
-
-    private static cloneElement(element : HTMLElement, computed : CSSStyleDeclaration = null) : Element {
-        var table       = document.createElement('table');
-        var clone       = document.createElement(element.tagName);
-
-        if (!computed) {
-            computed = window.getComputedStyle(element);
-        }
-
-        DDT.applyStyles(computed, clone);
-
-        clone.innerHTML = element.innerHTML;
-
-        table.appendChild(clone);
-
-        return table;
-    }
-
-    private static cloneStyles(element : Element, clone : Element) : void {
-        DDT.applyStyles(window.getComputedStyle(element), clone);
-    }
-
-    private static applyStyles(styles : CSSStyleDeclaration, element : Element) {
-        element.setAttribute('style', styles.cssText);
-    }
-
-    static defineCSSSelector(selectorName : string, rules : Object) {
+    static defineSelector(selectorName : string, rules : Object) {
         var style = document.createElement('style');
 
         style.appendChild(document.createTextNode(''));
@@ -181,14 +69,176 @@ class DDT {
         sheet.addRule(selectorName, css, 0);
     }
 
-    static defineCSSClass(className : string, rules : Object) {
-        return DDT.defineCSSSelector('.' + className, rules);
+    static defineClass(className : string, rules : Object) {
+        return DDTCSS.defineSelector('.' + className, rules);
     }
 }
 
-DDT.defineCSSClass(DDT.DDTNotVisibleClass, { visibility : 'hidden'});
-DDT.defineCSSClass(DDT.CloneElementClass, { position : 'absolute !important' })
-DDT.defineCSSSelector('.' + DDT.NoSelectClass + ', .' + DDT.NoSelectClass + ' *', {
+class DDTElement {
+
+    element : JQuery;
+
+    getNode() {
+        return this.element[0];
+    }
+
+    constructor(element : JQuery) {
+        this.element = element;
+    }
+
+    show() {
+        this.element.removeClass(DDTCSS.notVisible);
+    }
+
+    hide() {
+        this.element.addClass(DDTCSS.notVisible);
+    }
+
+    notSelectable() {
+        this.element.addClass(DDTCSS.noSelect);
+    }
+
+    selectable() {
+        this.element.removeClass(DDTCSS.noSelect);
+    }
+
+    getStyles() {
+        return window.getComputedStyle(this.getNode());
+    }
+
+    cloneStyles(element : DDTElement) {
+        this.applyStyles(element.getStyles());
+    }
+
+    applyStyles(styles : CSSStyleDeclaration) {
+        this.element.attr('style', styles.cssText);
+    }
+}
+
+class DDTPositionableElement extends DDTElement {
+
+    attachToCursor(diff : DDTCoords = null) {
+
+        var bodyElement = new DDTElement($('body'));
+
+        bodyElement.notSelectable();
+
+        var updateFunction = (event : Event) => {
+            var position = DDTCoords.fromEvent(event);
+
+            if (diff) {
+                position = position.minus(diff);
+            }
+
+            this.element.css({
+                top  : position.y,
+                left : position.x
+            });
+        };
+
+        var $doc = $(document);
+
+        $doc
+            .on('mousemove', updateFunction)
+            .one('mouseup', () => {
+                $doc.off('mousemove', updateFunction);
+                bodyElement.selectable();
+            });
+    }
+
+    setPosition(coords : DDTCoords) {
+        this.element.css({
+            top  : coords.y,
+            left : coords.x
+        });
+    }
+}
+
+class DDTRow extends DDTElement {
+
+}
+
+class DDTShadowRow extends DDTRow {
+
+    constructor(element : JQuery) {
+        super(element);
+
+        element.addClass(DDTCSS.shadowRow);
+    }
+
+    cloneHTML(element : DDTElement) {
+        this.getNode().innerHTML = element.getNode().innerHTML;
+    }
+}
+
+class DDTTable extends DDTPositionableElement {
+    rows : DDTRow[] = [];
+
+    createShadow(row : DDTRow) : DDTShadowTable {
+        var shadowTable = new DDTShadowTable($(document.createElement('table')));
+        var shadowRow   = new DDTShadowRow($(document.createElement('tr')));
+
+        shadowRow.cloneStyles(row);
+        shadowRow.cloneHTML(row);
+
+        shadowTable.addRow(shadowRow);
+
+        return shadowTable;
+    }
+
+    addRow(row : DDTRow) {
+        this.element.append(row.element);
+        this.rows.push(row);
+    }
+}
+
+class DDTShadowTable extends DDTTable {
+    constructor(element : JQuery) {
+        super(element);
+
+        element.addClass(DDTCSS.shadowTable);
+    }
+}
+
+class DragAndDropTable {
+
+    private table : DDTTable;
+
+    constructor(table : JQuery) {
+        this.table = new DDTTable(table);
+
+        this.wireEvents();
+    }
+
+    wireEvents() {
+        this.table.element.on('mousedown', 'tr', e => this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e)));
+    }
+
+    dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
+        var row         = new DDTRow(rowElement);
+        var shadow      = this.table.createShadow(row);
+        var rowPosition = DDTCoords.fromJQuery(rowElement);
+        var diff        = mousePosition.minus(rowPosition);
+
+        row.hide();
+
+        shadow.element.appendTo('body');
+
+        shadow.attachToCursor(diff);
+        shadow.setPosition(rowPosition);
+
+        $(document).one('mouseup', () => {
+            shadow.element.remove();
+
+            row.show();
+        });
+    }
+}
+
+DDTCSS.defineClass(DDTCSS.notVisible, { visibility: 'hidden'});
+DDTCSS.defineClass(DDTCSS.shadowTable, { position : 'absolute !important' });
+DDTCSS.defineClass(DDTCSS.shadowRow, { position : 'relative !important ' });
+DDTCSS.defineSelector('.' + DDTCSS.noSelect + ', .' + DDTCSS.noSelect + ' *', {
     '-webkit-user-select' : 'none',
     '-ms-user-select'     : 'none',
     '-o-user-select'      : 'none',
