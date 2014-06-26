@@ -344,7 +344,7 @@ export class DragAndDropTable {
                     row.hide();
 
                     this.emitter.emit(DDTEvents.reorder, [
-                        _.map(this.table.element.find('tr'), tr => $(tr).data('value'))
+                        _.map(this.table.element.find('tbody tr'), tr => $(tr).data('value'))
                     ]);
                 }
             });
