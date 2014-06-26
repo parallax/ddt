@@ -240,7 +240,7 @@
     define('jquery', function() { return $; });
     define('lodash', function() { return _ });
 
-    require(['bindings/jquery'], function(ddt) {
+    require(['ddt', 'bindings/jquery'], function(ddt) {
 
         // var table = window.table = new ddt.DragAndDropTable($('table'));
         var table = window.table = $('table').ddt();
