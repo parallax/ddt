@@ -505,8 +505,6 @@ export class DDTShadowTable extends DDTTable {
             colgroup.append($(document.createElement('col')).width($(td).outerWidth()));
         });
 
-        console.log(colgroup.html());
-
         this.element.prepend(colgroup);
     }
 }
