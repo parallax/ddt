@@ -23,20 +23,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="ddt.ts" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="ddt.ts" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ddt.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.31437126" vertical-offset="12205" max-vertical-offset="16800">
+            <state vertical-scroll-proportion="-16.153847" vertical-offset="12205" max-vertical-offset="16800">
               <caret line="505" column="11" selection-start-line="505" selection-start-column="11" selection-end-line="505" selection-end-column="11" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="README.md" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="README.md" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-7.0" vertical-offset="0" max-vertical-offset="350">
+            <state vertical-scroll-proportion="0.13089006" vertical-offset="0" max-vertical-offset="1337">
               <caret line="7" column="22" selection-start-line="7" selection-start-column="22" selection-end-line="7" selection-end-column="22" />
               <folding />
             </state>
@@ -66,8 +66,8 @@
       <file leaf-file-name="ddt.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ddt.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="9475" max-vertical-offset="17775">
-              <caret line="379" column="0" selection-start-line="379" selection-start-column="0" selection-end-line="379" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="9400" max-vertical-offset="17725">
+              <caret line="376" column="0" selection-start-line="376" selection-start-column="0" selection-end-line="376" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -97,8 +97,8 @@
         <option value="$PROJECT_DIR$/ddt.js" />
         <option value="$PROJECT_DIR$/bindings/knockout.js" />
         <option value="$PROJECT_DIR$/test.html" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/ddt.ts" />
+        <option value="$PROJECT_DIR$/README.md" />
       </list>
     </option>
   </component>
@@ -360,12 +360,12 @@
       <workItem from="1403795090332" duration="1835000" />
       <workItem from="1403798225434" duration="888000" />
       <workItem from="1403870150883" duration="12221000" />
-      <workItem from="1403883598580" duration="86000" />
+      <workItem from="1403883598580" duration="112000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="35069000" />
+    <option name="totallyTimeSpent" value="35095000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="2560" height="1440" extended-state="0" />
@@ -774,8 +774,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ddt.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="9475" max-vertical-offset="17775">
-          <caret line="379" column="0" selection-start-line="379" selection-start-column="0" selection-end-line="379" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="9400" max-vertical-offset="17725">
+          <caret line="376" column="0" selection-start-line="376" selection-start-column="0" selection-end-line="376" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -804,18 +804,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
+    <entry file="file://$PROJECT_DIR$/ddt.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-7.0" vertical-offset="0" max-vertical-offset="350">
-          <caret line="7" column="22" selection-start-line="7" selection-start-column="22" selection-end-line="7" selection-end-column="22" />
+        <state vertical-scroll-proportion="-16.153847" vertical-offset="12205" max-vertical-offset="16800">
+          <caret line="505" column="11" selection-start-line="505" selection-start-column="11" selection-end-line="505" selection-end-column="11" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ddt.ts">
+    <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.31437126" vertical-offset="12205" max-vertical-offset="16800">
-          <caret line="505" column="11" selection-start-line="505" selection-start-column="11" selection-end-line="505" selection-end-column="11" />
+        <state vertical-scroll-proportion="0.13089006" vertical-offset="0" max-vertical-offset="1337">
+          <caret line="7" column="22" selection-start-line="7" selection-start-column="22" selection-end-line="7" selection-end-column="22" />
           <folding />
         </state>
       </provider>
