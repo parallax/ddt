@@ -310,7 +310,7 @@ export class DDTElement {
 
     static cloneAttributes(element : Element, clone : Element, ignore : string[] = ['id']) {
         var attrs = Array.prototype.slice.call(element.attributes);
-        
+
         if (ignore) {
             attrs = attrs.filter(attr => ignore.indexOf(attr.name) === -1);
         }
@@ -503,21 +503,23 @@ export class DragAndDropTable {
     private table : DDTTable;
     private $rows : JQuery;
 
-    private enabled    = true;
-    private hasChanged = false;
+    private enabled          = true;
+    private couldHaveChanged = false;
 
-    private _options = { enabled : false };
+    private _options         = { enabled : false };
 
     private static window    = new DDTElement($(window));
     private static $document = $(document);
 
+    private lastValues : any[];
+
     constructor(table : JQuery) {
-        this.table     = new DDTTable(table);
-        this.emitter   = new DDTEventEmitter();
+        this.table      = new DDTTable(table);
+        this.emitter    = new DDTEventEmitter();
+        this.$rows      = this.getRows();
+        this.lastValues = this.calculateValues();
 
         this.wireEvents();
-
-        this.$rows  = this.getRows();
     }
 
     wireEvents() {
@@ -564,7 +566,6 @@ export class DragAndDropTable {
     private getMovingAxis()     { return this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y]; }
     private getRows()           { return this.table.element.find(this.options.rowSelector); }
     private calculateValues()   { return _.map(this.$rows, row => $(row).data('value')); }
-    private emitValues()        { this.emitter.emit('ddt.order', [this.calculateValues()]); }
 
     private calculateOffBy(row : Element, tbody : JQuery) : DDTCoords {
         var styles = window.getComputedStyle(row);
@@ -588,10 +589,15 @@ export class DragAndDropTable {
         shadow.element.remove();
         row.show();
 
-        if (this.hasChanged) {
-            this.emitValues();
+        if (this.couldHaveChanged) {
 
-            this.hasChanged = false;
+            var values = this.calculateValues();
+            
+            if (this.hasChanged(values)) {
+                this.emitValues(values);
+            }
+
+            this.couldHaveChanged = false;
             this.$rows      = null;
         }
     }
@@ -612,8 +618,19 @@ export class DragAndDropTable {
         });
 
         if (res) {
-            this.hasChanged = true;
+            this.couldHaveChanged = true;
         }
+    }
+
+    private hasChanged(values : any[] = this.calculateValues()) {
+        return _.some(values, (val, i) => val !== this.lastValues[i]);
+    }
+
+
+    private emitValues(values : any[] = this.calculateValues()) {
+        this.emitter.emit('ddt.order', [values]);
+        
+        this.lastValues = values;
     }
 
     private swap(row : DDTRow, toSwapWith : DDTElement, shadow : DDTShadowTable) {

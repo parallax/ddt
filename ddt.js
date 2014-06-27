@@ -553,14 +553,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 rowSelector: '> tbody > tr'
             };
             this.enabled = true;
-            this.hasChanged = false;
+            this.couldHaveChanged = false;
             this._options = { enabled: false };
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
+            this.$rows = this.getRows();
+            this.lastValues = this.calculateValues();
 
             this.wireEvents();
-
-            this.$rows = this.getRows();
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
@@ -622,9 +622,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 return $(row).data('value');
             });
         };
-        DragAndDropTable.prototype.emitValues = function () {
-            this.emitter.emit('ddt.order', [this.calculateValues()]);
-        };
 
         DragAndDropTable.prototype.calculateOffBy = function (row, tbody) {
             var styles = window.getComputedStyle(row);
@@ -648,10 +645,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             shadow.element.remove();
             row.show();
 
-            if (this.hasChanged) {
-                this.emitValues();
+            if (this.couldHaveChanged) {
+                var values = this.calculateValues();
 
-                this.hasChanged = false;
+                if (this.hasChanged(values)) {
+                    this.emitValues(values);
+                }
+
+                this.couldHaveChanged = false;
                 this.$rows = null;
             }
         };
@@ -675,8 +676,23 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             });
 
             if (res) {
-                this.hasChanged = true;
+                this.couldHaveChanged = true;
             }
+        };
+
+        DragAndDropTable.prototype.hasChanged = function (values) {
+            var _this = this;
+            if (typeof values === "undefined") { values = this.calculateValues(); }
+            return _.some(values, function (val, i) {
+                return val !== _this.lastValues[i];
+            });
+        };
+
+        DragAndDropTable.prototype.emitValues = function (values) {
+            if (typeof values === "undefined") { values = this.calculateValues(); }
+            this.emitter.emit('ddt.order', [values]);
+
+            this.lastValues = values;
         };
 
         DragAndDropTable.prototype.swap = function (row, toSwapWith, shadow) {
