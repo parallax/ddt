@@ -343,9 +343,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         * @todo This is far too messy, clean it up
         * @param diff
         */
-        DDTPositionableElement.prototype.attachToCursor = function (container, diff) {
+        DDTPositionableElement.prototype.attachToCursor = function (container, diff, axis) {
             var _this = this;
             if (typeof diff === "undefined") { diff = null; }
+            if (typeof axis === "undefined") { axis = null; }
             var bodyElement = new DDTElement($('body'));
 
             bodyElement.notSelectable();
@@ -357,7 +358,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                     position = position.minus(diff);
                 }
 
-                _this.setPosition(position);
+                _this.setPosition(position, axis);
             };
 
             container.on('mousemove', updateFunction).one('mouseup', function () {
@@ -366,13 +367,27 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             });
         };
 
-        DDTPositionableElement.prototype.setPosition = function (coords) {
-            this.element.css({
-                top: coords.y,
-                left: coords.x
-            });
+        DDTPositionableElement.prototype.setPosition = function (coords, axis) {
+            if (typeof axis === "undefined") { axis = null; }
+            if (!axis) {
+                axis = [0 /* X */, 1 /* Y */];
+            }
 
-            this.emitter.emit('ddt.position', [coords]);
+            var obj = {};
+
+            if (axis.indexOf(0 /* X */) > -1) {
+                obj.left = coords.x;
+            }
+
+            if (axis.indexOf(1 /* Y */) > -1) {
+                obj.top = coords.y;
+            }
+
+            this.element.css(obj);
+
+            var pos = this.element.offset();
+
+            this.emitter.emit('ddt.position', [new DDTCoords(pos.left, pos.top)]);
         };
         return DDTPositionableElement;
     })(DDTElement);
@@ -452,6 +467,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
+            this.verticalOnly = true;
             this.enabled = true;
             this.scrolling = false;
             this.table = new DDTTable(table);
@@ -506,8 +522,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             }
 
             var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
+            var axis = this.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
 
-            shadow.attachToCursor(this.$document, diff.add(spacingCoords));
+            shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis);
             shadow.setPosition(rowPosition.minus(spacingCoords));
 
             this.$document.one('mouseup', function () {
