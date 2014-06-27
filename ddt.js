@@ -7,6 +7,11 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $, _) {
+    // Simple parseInt wrapper
+    var toNumber = function (n) {
+        return parseInt(n, 10) || 0;
+    };
+
     
 
     /**
@@ -66,30 +71,31 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTCoords.prototype.minus = function (coords) {
             return new DDTCoords(this.x - coords.x, this.y - coords.y);
         };
-
         DDTCoords.prototype.add = function (coords) {
             return new DDTCoords(this.x + coords.x, this.y + coords.y);
+        };
+
+        DDTCoords.prototype.gt = function (coords, axis) {
+            var key = DDTCoords.enumToAxis(axis);
+
+            return this[key] > coords[key];
+        };
+
+        DDTCoords.prototype.lt = function (coords, axis) {
+            var key = DDTCoords.enumToAxis(axis);
+
+            return this[key] < coords[key];
         };
 
         /**
         * Add a certain amount to a specific axis
         */
         DDTCoords.prototype.addToAxis = function (size, axis) {
-            if (axis === 0 /* X */) {
-                return new DDTCoords(this.x + size, this.y);
-            }
+            var coords = [this.x, this.y];
 
-            return new DDTCoords(this.x, this.y + size);
-        };
+            coords[axis === 0 /* X */ ? 0 : 1] += size;
 
-        DDTCoords.prototype.gt = function (coords, axis) {
-            var key = DDTCoords.enumToAxis(axis);
-            return this[key] > coords[key];
-        };
-
-        DDTCoords.prototype.lt = function (coords, axis) {
-            var key = DDTCoords.enumToAxis(axis);
-            return this[key] < coords[key];
+            return new DDTCoords(coords[0], coords[1]);
         };
 
         /**
@@ -104,7 +110,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTCoords.fromEvent = function (event) {
             return new DDTCoords(event.pageX, event.pageY);
         };
-
         DDTCoords.fromElement = function (element) {
             return DDTCoords.fromJQuery($(element));
         };
@@ -193,6 +198,26 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         /**
+        * Get the offset top of an element from a parent.
+        */
+        DDTElement.prototype.offsetTop = function () {
+            return (this.element.offset() || { top: 0 }).top;
+        };
+
+        DDTElement.prototype.show = function () {
+            this.element.removeClass(DDTElement.notVisible);
+        };
+        DDTElement.prototype.hide = function () {
+            this.element.addClass(DDTElement.notVisible);
+        };
+        DDTElement.prototype.notSelectable = function () {
+            this.element.addClass(DDTElement.noSelect);
+        };
+        DDTElement.prototype.selectable = function () {
+            this.element.removeClass(DDTElement.noSelect);
+        };
+
+        /**
         * Swap two elements in the dom
         *
         * @see http://stackoverflow.com/a/698440/851985
@@ -207,35 +232,11 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             ourNodeParent.insertBefore(theirNode, sibling);
         };
 
-        DDTElement.prototype.show = function () {
-            this.element.removeClass(DDTElement.notVisible);
-        };
-
-        DDTElement.prototype.hide = function () {
-            this.element.addClass(DDTElement.notVisible);
-        };
-
-        DDTElement.prototype.notSelectable = function () {
-            this.element.addClass(DDTElement.noSelect);
-        };
-
-        DDTElement.prototype.selectable = function () {
-            this.element.removeClass(DDTElement.noSelect);
-        };
-
         /**
         * Get the amount of padding and border an element has on its left side
         */
         DDTElement.getLeftPaddingAndBorder = function (element) {
-            return parseInt(element.css('border-left-width') || '0', 10) + parseInt(element.css('border-top-width') || '0', 10);
-        };
-
-        /**
-        * Get the offset top of an element from a parent, taking into account that jQuery may return
-        * undefined.
-        */
-        DDTElement.prototype.offsetTop = function () {
-            return (this.element.offset() || { top: 0 }).top;
+            return toNumber(element.css('border-left-width')) + toNumber(element.css('border-top-width'));
         };
 
         /**
@@ -335,6 +336,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTElement.cloneAttributes = function (element, clone, ignore) {
             if (typeof ignore === "undefined") { ignore = ['id']; }
             var attrs = Array.prototype.slice.call(element.attributes);
+
             if (ignore) {
                 attrs = attrs.filter(function (attr) {
                     return ignore.indexOf(attr.name) === -1;
@@ -357,7 +359,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTElement.getVerticalBorders = function (el) {
-            return (parseInt(el.css('border-top-width'), 10) || 0) + (parseInt(el.css('border-bottom-width'), 10) || 0);
+            return toNumber(el.css('border-top-width')) + toNumber(el.css('border-bottom-width'));
         };
         DDTElement.notVisible = 'DDTNotVisible';
         DDTElement.shadowTable = 'DDTShadowTable';
@@ -481,9 +483,9 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var width;
 
             if (this.element.css('border-collapse') === 'collapse') {
-                width = tbody.outerWidth() + (parseInt(tbody.css('border-left-width'), 10) / 2) + (parseInt(tbody.css('border-right-width'), 10) / 2);
+                width = tbody.outerWidth() + (toNumber(tbody.css('border-left-width')) / 2) + (toNumber(tbody.css('border-right-width')) / 2);
             } else {
-                width = parseInt(this.element.css('width'));
+                width = toNumber(this.element.css('width'));
             }
 
             shadowTable.element.width(width);
@@ -524,15 +526,18 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTShadowTable.prototype.fixColGroup = function (row) {
+            var colgroup = $(document.createElement('colgroup'));
+            var cols;
+
             if (this.element.children('colgroup').length) {
                 this.element.children('colgroup').remove();
             }
 
-            var colgroup = $(document.createElement('colgroup'));
-
-            row.element.children('td').each(function (i, td) {
-                colgroup.append($(document.createElement('col')).width($(td).outerWidth()));
+            cols = _.map(row.element.children('td'), function (td) {
+                return $(document.createElement('col')).width($(td).outerWidth());
             });
+
+            colgroup.append(cols);
 
             this.element.prepend(colgroup);
         };
@@ -542,30 +547,24 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
-            this.verticalOnly = true;
-            this.boundToTBody = true;
+            this.options = {
+                verticalOnly: true,
+                boundToTBody: true,
+                rowSelector: '> tbody > tr'
+            };
             this.enabled = true;
             this.hasChanged = false;
+            this._options = { enabled: false };
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
-            this.window = new DDTElement($(window));
-            this.$document = $(document);
 
             this.wireEvents();
-        }
-        DragAndDropTable.prototype.enable = function () {
-            this.enabled = true;
-        };
-        DragAndDropTable.prototype.disable = function () {
-            this.enabled = false;
-        };
-        DragAndDropTable.prototype.toggleEnabled = function () {
-            this.enabled ? this.disable() : this.enable();
-        };
 
+            this.$rows = this.getRows();
+        }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
-            this.table.element.on('mousedown', DragAndDropTable.rowSelector, function (e) {
+            this.table.element.on('mousedown', this.options.rowSelector, function (e) {
                 if (_this.enabled && e.which === 1) {
                     _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
                 }
@@ -578,34 +577,66 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var shadow = this.table.createShadow(row);
             var rowPosition = DDTCoords.fromJQuery(rowElement);
             var diff = mousePosition.minus(rowPosition);
-
-            row.hide();
+            var tbody = this.table.element.children('tbody');
+            var offBy = this.calculateOffBy(rowElement[0], tbody);
 
             shadow.element.appendTo('body');
             shadow.emitter.on('ddt.position', function (coords) {
                 return _this.dragged(row, shadow, coords);
             });
 
-            var styles = window.getComputedStyle(rowElement[0]);
+            shadow.attachToCursor(DragAndDropTable.$document, diff.add(offBy), this.getMovingAxis(), this.getBindingElement());
 
+            // Set the initial position of the shadow
+            shadow.setPosition(rowPosition.minus(offBy));
+
+            // Hide the row that we've started to drag, as the shadow has replaced it
+            row.hide();
+
+            DragAndDropTable.$document.one('mouseup', function () {
+                return _this.endDrag(row, shadow);
+            });
+        };
+
+        DragAndDropTable.prototype.disable = function () {
+            this._options.enabled = false;
+        };
+        DragAndDropTable.prototype.enable = function () {
+            this._options.enabled = true;
+        };
+        DragAndDropTable.prototype.toggleEnabled = function () {
+            this._options.enabled ? this.disable() : this.enable();
+        };
+
+        DragAndDropTable.prototype.getBindingElement = function () {
+            return this.options.boundToTBody ? this.table.getTbody() : null;
+        };
+        DragAndDropTable.prototype.getMovingAxis = function () {
+            return this.options.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
+        };
+        DragAndDropTable.prototype.getRows = function () {
+            return this.table.element.find(this.options.rowSelector);
+        };
+        DragAndDropTable.prototype.calculateValues = function () {
+            return _.map(this.$rows, function (row) {
+                return $(row).data('value');
+            });
+        };
+        DragAndDropTable.prototype.emitValues = function () {
+            this.emitter.emit('ddt.order', [this.calculateValues()]);
+        };
+
+        DragAndDropTable.prototype.calculateOffBy = function (row, tbody) {
+            var styles = window.getComputedStyle(row);
             var minus = [0, 0];
 
             if (styles['border-collapse'] === 'separate') {
-                minus[1] = parseInt(styles['border-spacing'].split(' ')[1], 10);
+                minus[1] = toNumber(styles['border-spacing'].split(' ')[1]);
             } else {
-                var tbody = this.table.element.children('tbody');
-                minus[0] = (parseInt(tbody.css('border-right-width'), 10) - parseInt(tbody.css('border-left-width'), 10)) / 2;
+                minus[0] = (toNumber(tbody.css('border-right-width')) - toNumber(tbody.css('border-left-width'))) / 2;
             }
 
-            var minusCoords = new DDTCoords(minus[0], minus[1]);
-            var axis = this.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
-
-            shadow.attachToCursor(this.$document, diff.add(minusCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
-            shadow.setPosition(rowPosition.minus(minusCoords));
-
-            this.$document.one('mouseup', function () {
-                return _this.endDrag(row, shadow);
-            });
+            return new DDTCoords(minus[0], minus[1]);
         };
 
         DragAndDropTable.prototype.dragged = function (row, shadow, coords) {
@@ -618,7 +649,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             row.show();
 
             if (this.hasChanged) {
-                this.emitValues(this.$rows);
+                this.emitValues();
 
                 this.hasChanged = false;
                 this.$rows = null;
@@ -627,32 +658,17 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
         DragAndDropTable.prototype.handleRowSwapping = function (row, shadow, coords) {
             var _this = this;
-            var rows = this.$rows = this.table.element.find(DragAndDropTable.rowSelector);
+            var rows = this.$rows = this.getRows();
+            var node = row.getNode();
+            var rowsWithoutOurNode = _.filter(rows, function (tr) {
+                return tr !== node;
+            });
 
-            var res = _.some(rows, function (tr) {
-                // If this is the element we're dragging, we don't want to do any calculations on it
-                if (tr === row.getNode()) {
-                    return;
-                }
-
-                var rowCoords = DDTCoords.fromElement(tr);
-                var $tr = $(tr);
-                var tableBounds = shadow.calculateBounds(_this.table);
-
-                var toSwapWith;
-
-                if (tableBounds === 0 /* LOW */) {
-                    toSwapWith = $(rows[0]);
-                } else if (tableBounds === 2 /* HIGH */) {
-                    toSwapWith = $(_.last(rows));
-                } else if (coords.isOverAxis(rowCoords, $tr.height() / 2, 1 /* Y */)) {
-                    toSwapWith = $tr;
-                }
+            var res = _.some(rowsWithoutOurNode, function (tr) {
+                var toSwapWith = _this.calculateRowToSwapWith(tr, coords, shadow);
 
                 if (toSwapWith && row.getNode() !== toSwapWith[0]) {
-                    row.swap(new DDTElement(toSwapWith));
-                    DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
-                    shadow.fixBackgroundColor(row);
+                    _this.swap(row, new DDTElement(toSwapWith), shadow);
 
                     return true;
                 }
@@ -663,36 +679,47 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             }
         };
 
-        DragAndDropTable.prototype.emitValues = function (rows) {
-            this.emitter.emit('ddt.order', [
-                _.map(rows, function (tr) {
-                    return $(tr).data('value');
-                })
-            ]);
+        DragAndDropTable.prototype.swap = function (row, toSwapWith, shadow) {
+            row.swap(toSwapWith);
+            DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
+            shadow.fixBackgroundColor(row);
+        };
+
+        DragAndDropTable.prototype.calculateRowToSwapWith = function (currentRow, coords, shadow) {
+            var rowCoords = DDTCoords.fromElement(currentRow);
+            var $tr = $(currentRow);
+            var limits = shadow.calculateBounds(this.table);
+
+            var toSwapWith;
+
+            if (limits === 0 /* LOW */) {
+                toSwapWith = $(this.$rows[0]);
+            } else if (limits === 2 /* HIGH */) {
+                toSwapWith = $(_.last(this.$rows));
+            } else if (coords.isOverAxis(rowCoords, $tr.height() / 2, 1 /* Y */)) {
+                toSwapWith = $tr;
+            }
+
+            return toSwapWith;
         };
 
         DragAndDropTable.prototype.handleScrolling = function (shadow) {
-            var bounds = shadow.calculateBounds(this.window);
-
-            if (bounds === 1 /* IN */) {
+            if (shadow.calculateBounds(this.table, shadow.row.element.outerHeight()) !== 1 /* IN */) {
                 return;
             }
 
-            var tableBounds = shadow.calculateBounds(this.table, shadow.row.element.outerHeight());
+            switch (shadow.calculateBounds(DragAndDropTable.window)) {
+                case 2 /* HIGH */:
+                    document.body.scrollTop += 5;
+                    break;
 
-            if (tableBounds !== 1 /* IN */) {
-                return;
-            }
-
-            if (bounds === 2 /* HIGH */) {
-                document.body.scrollTop += 5;
-            }
-
-            if (bounds === 0 /* LOW */) {
-                document.body.scrollTop -= 5;
+                case 0 /* LOW */:
+                    document.body.scrollTop -= 5;
+                    break;
             }
         };
-        DragAndDropTable.rowSelector = 'tbody tr';
+        DragAndDropTable.window = new DDTElement($(window));
+        DragAndDropTable.$document = $(document);
         return DragAndDropTable;
     })();
     exports.DragAndDropTable = DragAndDropTable;
