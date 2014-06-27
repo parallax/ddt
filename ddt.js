@@ -17,7 +17,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTAxis[DDTAxis["Y"] = 1] = "Y";
     })(exports.DDTAxis || (exports.DDTAxis = {}));
     var DDTAxis = exports.DDTAxis;
-    ;
 
     /**
     * The result of a bounds calculation.
@@ -84,12 +83,12 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DDTCoords.prototype.gt = function (coords, axis) {
-            var key = DDTCoords.enumToAxis(key);
+            var key = DDTCoords.enumToAxis(axis);
             return this[key] > coords[key];
         };
 
         DDTCoords.prototype.lt = function (coords, axis) {
-            var key = DDTCoords.enumToAxis(key);
+            var key = DDTCoords.enumToAxis(axis);
             return this[key] < coords[key];
         };
 
@@ -307,7 +306,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
             var pairs = _.chain(ourStyles).pairs().map(function (p) {
                 var k = DDTCSS.arrowCase(p[0]);
-                var v = p[1];
 
                 if (!ourStyles.getPropertyValue(k) || dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k)) {
                     return null;
@@ -357,6 +355,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
             return color;
         };
+
+        DDTElement.getVerticalBorders = function (el) {
+            return (parseInt(el.css('border-top-width'), 10) || 0) + (parseInt(el.css('border-bottom-width'), 10) || 0);
+        };
         DDTElement.notVisible = 'DDTNotVisible';
         DDTElement.shadowTable = 'DDTShadowTable';
         DDTElement.shadowRow = 'DDTShadowRow';
@@ -372,7 +374,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         }
         /**
         * @todo This is far too messy, clean it up
-        * @param diff
         */
         DDTPositionableElement.prototype.attachToCursor = function (container, diff, axis, bound) {
             var _this = this;
@@ -396,13 +397,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 }
 
                 if (boundElement) {
-                    var bounds = _this.calculateBounds(boundElement, 0, position);
+                    var borders = DDTElement.getVerticalBorders(_this.element.find('> tbody > tr > td').eq(0));
+                    var bounds = _this.calculateBounds(boundElement, borders, position);
 
                     if (bounds !== 1 /* IN */) {
                         var newPos = boundElement.offsetTop();
 
                         if (bounds === 2 /* HIGH */) {
-                            newPos += boundElement.element.height() - _this.element.height();
+                            newPos += boundElement.element.height() - _this.element.height() + borders;
                         }
 
                         position = new DDTCoords(position.x, newPos);
@@ -469,23 +471,25 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DDTTable() {
             _super.apply(this, arguments);
         }
-        DDTTable.prototype.createShadow = function (row, copyStyles) {
-            if (typeof copyStyles === "undefined") { copyStyles = false; }
-            var clonedRow = row.clone([], copyStyles);
-            var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')), copyStyles);
+        DDTTable.prototype.createShadow = function (row) {
+            var tbody = this.element.children('tbody');
+            var clonedRow = row.clone();
+            var clonedTable = this.clone(Array.prototype.slice.call(this.element.children('tbody, thead, colgroup')));
             var shadowTable = new DDTShadowTable(clonedTable.element);
             var shadowRow = new DDTShadowRow(clonedRow.element);
-            var width = this.element.outerWidth();
+
+            var width;
 
             if (this.element.css('border-collapse') === 'collapse') {
-                width += DDTElement.getLeftPaddingAndBorder(this.element.find('tbody'));
+                width = tbody.outerWidth() + (parseInt(tbody.css('border-left-width'), 10) / 2) + (parseInt(tbody.css('border-right-width'), 10) / 2);
+            } else {
+                width = parseInt(this.element.css('width'));
             }
 
-            shadowTable.element.css('height', 'auto');
             shadowTable.element.width(width);
-
             shadowTable.setShadowRow(shadowRow);
             shadowTable.fixBackgroundColor(row);
+            shadowTable.fixColGroup(row);
 
             DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
@@ -518,6 +522,22 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTShadowTable.prototype.fixBackgroundColor = function (row) {
             this.row.element.css('background', DDTElement.getInheritedBackgroundColor(row.element));
         };
+
+        DDTShadowTable.prototype.fixColGroup = function (row) {
+            if (this.element.children('colgroup').length) {
+                this.element.children('colgroup').remove();
+            }
+
+            var colgroup = $(document.createElement('colgroup'));
+
+            row.element.children('td').each(function (i, td) {
+                colgroup.append($(document.createElement('col')).width($(td).outerWidth()));
+            });
+
+            console.log(colgroup.html());
+
+            this.element.prepend(colgroup);
+        };
         return DDTShadowTable;
     })(DDTTable);
     exports.DDTShadowTable = DDTShadowTable;
@@ -526,7 +546,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DragAndDropTable(table) {
             this.verticalOnly = true;
             this.boundToTBody = true;
-            this.copyStyles = false;
             this.enabled = true;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
@@ -557,7 +576,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DragAndDropTable.prototype.dragRow = function (rowElement, mousePosition) {
             var _this = this;
             var row = new DDTRow(rowElement);
-            var shadow = this.table.createShadow(row, this.copyStyles);
+            var shadow = this.table.createShadow(row);
             var rowPosition = DDTCoords.fromJQuery(rowElement);
             var diff = mousePosition.minus(rowPosition);
 
@@ -569,21 +588,21 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             });
 
             var styles = window.getComputedStyle(rowElement[0]);
-            var spacing;
+
+            var minus = [0, 0];
 
             if (styles['border-collapse'] === 'separate') {
-                spacing = [0, styles['border-spacing'].split(' ').map(function (n) {
-                        return parseInt(n, 10);
-                    })[1]];
+                minus[1] = parseInt(styles['border-spacing'].split(' ')[1], 10);
             } else {
-                spacing = [DDTElement.getLeftPaddingAndBorder(this.table.element.find('tbody')) / 2, 0];
+                var tbody = this.table.element.children('tbody');
+                minus[0] = (parseInt(tbody.css('border-right-width'), 10) - parseInt(tbody.css('border-left-width'), 10)) / 2;
             }
 
-            var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
+            var minusCoords = new DDTCoords(minus[0], minus[1]);
             var axis = this.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
 
-            shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
-            shadow.setPosition(rowPosition.minus(spacingCoords));
+            shadow.attachToCursor(this.$document, diff.add(minusCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
+            shadow.setPosition(rowPosition.minus(minusCoords));
 
             this.$document.one('mouseup', function () {
                 return _this.endDrag(row, shadow);
