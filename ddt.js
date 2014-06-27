@@ -343,11 +343,17 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         * @todo This is far too messy, clean it up
         * @param diff
         */
-        DDTPositionableElement.prototype.attachToCursor = function (container, diff, axis) {
+        DDTPositionableElement.prototype.attachToCursor = function (container, diff, axis, bound) {
             var _this = this;
             if (typeof diff === "undefined") { diff = null; }
             if (typeof axis === "undefined") { axis = null; }
+            if (typeof bound === "undefined") { bound = null; }
             var bodyElement = new DDTElement($('body'));
+            var boundElement;
+
+            if (bound) {
+                boundElement = new DDTElement($(bound));
+            }
 
             bodyElement.notSelectable();
 
@@ -356,6 +362,20 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
                 if (diff) {
                     position = position.minus(diff);
+                }
+
+                if (bound) {
+                    var bounds = _this.calculateBounds(boundElement);
+                    var offset = boundElement.offsetTop();
+                    var height = boundElement.element.height();
+
+                    if (bounds === 0 /* LOW */) {
+                        position = new DDTCoords(position.x, offset);
+                    }
+
+                    if (bounds === 2 /* HIGH */) {
+                        position = new DDTCoords(position.x, offset + height - _this.element.height());
+                    }
                 }
 
                 _this.setPosition(position, axis);
@@ -468,6 +488,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
             this.verticalOnly = true;
+            this.boundToTBody = true;
             this.enabled = true;
             this.scrolling = false;
             this.table = new DDTTable(table);
@@ -524,7 +545,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
             var axis = this.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
 
-            shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis);
+            shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
             shadow.setPosition(rowPosition.minus(spacingCoords));
 
             this.$document.one('mouseup', function () {
