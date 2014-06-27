@@ -267,13 +267,18 @@ export class DDTElement {
     /**
      * Deep clone an element, with the ability to ignore elements
      */
-    clone(ignoreElements : Element[] = []) : DDTElement {
+    clone(ignoreElements : Element[] = [], copyStyles : boolean = false) : DDTElement {
 
         var cloneFn = (el : JQuery) => {
-            var clone = $(document.createElement(el[0].tagName));
-            var children = el.children();
+            var clone     = $(document.createElement(el[0].tagName));
+            var children  = el.children();
 
-            DDTElement.cloneUniqueStyles(el[0], clone[0]);
+            if (copyStyles) {
+                DDTElement.cloneAttributes(el[0], clone[0], ['class', 'id']);
+                DDTElement.cloneUniqueStyles(el[0], clone[0]);
+            } else {
+                DDTElement.cloneAttributes(el[0], clone[0]);
+            }
 
             if (!children.length) {
                 // If we have no children, just set our text value. This is usually for table cells.
@@ -328,6 +333,15 @@ export class DDTElement {
 
     static cloneUniqueStyles(element : Element, clone : Element, ignore : string[] = []) {
         clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
+    }
+
+    static cloneAttributes(element : Element, clone : Element, ignore : string[] = ['id']) {
+        var attrs = Array.prototype.slice.call(element.attributes);
+        if (ignore) {
+            attrs = attrs.filter(attr => ignore.indexOf(attr.name) === -1);
+        }
+
+        attrs.forEach(attr => clone.setAttribute(attr.name, attr.value));
     }
 }
 
@@ -416,9 +430,9 @@ export class DDTShadowRow extends DDTRow {
 }
 
 export class DDTTable extends DDTPositionableElement {
-    createShadow(row : DDTRow) : DDTShadowTable {
-        var clonedRow   = row.clone();
-        var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
+    createShadow(row : DDTRow, copyStyles : boolean = false) : DDTShadowTable {
+        var clonedRow   = row.clone([], copyStyles);
+        var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')), copyStyles);
         var shadowTable = new DDTShadowTable(clonedTable.element);
         var shadowRow   = new DDTShadowRow(clonedRow.element);
         var width       = this.element.outerWidth();
@@ -468,12 +482,13 @@ export class DragAndDropTable {
 
     public verticalOnly = true;
     public boundToTBody = true;
+    public copyStyles   = false;
 
     private table     : DDTTable;
     private window    : DDTElement;
     private $document : JQuery;
 
-    private enabled = true;
+    private enabled    = true;
 
     private static rowSelector = 'tbody tr';
 
@@ -500,7 +515,7 @@ export class DragAndDropTable {
 
     dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
         var row         = new DDTRow(rowElement);
-        var shadow      = this.table.createShadow(row);
+        var shadow      = this.table.createShadow(row, this.copyStyles);
         var rowPosition = DDTCoords.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
 

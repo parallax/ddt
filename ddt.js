@@ -265,13 +265,19 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         /**
         * Deep clone an element, with the ability to ignore elements
         */
-        DDTElement.prototype.clone = function (ignoreElements) {
+        DDTElement.prototype.clone = function (ignoreElements, copyStyles) {
             if (typeof ignoreElements === "undefined") { ignoreElements = []; }
+            if (typeof copyStyles === "undefined") { copyStyles = false; }
             var cloneFn = function (el) {
                 var clone = $(document.createElement(el[0].tagName));
                 var children = el.children();
 
-                DDTElement.cloneUniqueStyles(el[0], clone[0]);
+                if (copyStyles) {
+                    DDTElement.cloneAttributes(el[0], clone[0], ['class', 'id']);
+                    DDTElement.cloneUniqueStyles(el[0], clone[0]);
+                } else {
+                    DDTElement.cloneAttributes(el[0], clone[0]);
+                }
 
                 if (!children.length) {
                     // If we have no children, just set our text value. This is usually for table cells.
@@ -326,6 +332,20 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTElement.cloneUniqueStyles = function (element, clone, ignore) {
             if (typeof ignore === "undefined") { ignore = []; }
             clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
+        };
+
+        DDTElement.cloneAttributes = function (element, clone, ignore) {
+            if (typeof ignore === "undefined") { ignore = ['id']; }
+            var attrs = Array.prototype.slice.call(element.attributes);
+            if (ignore) {
+                attrs = attrs.filter(function (attr) {
+                    return ignore.indexOf(attr.name) === -1;
+                });
+            }
+
+            attrs.forEach(function (attr) {
+                return clone.setAttribute(attr.name, attr.value);
+            });
         };
         DDTElement.notVisible = 'DDTNotVisible';
         DDTElement.shadowTable = 'DDTShadowTable';
@@ -439,9 +459,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DDTTable() {
             _super.apply(this, arguments);
         }
-        DDTTable.prototype.createShadow = function (row) {
-            var clonedRow = row.clone();
-            var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')));
+        DDTTable.prototype.createShadow = function (row, copyStyles) {
+            if (typeof copyStyles === "undefined") { copyStyles = false; }
+            var clonedRow = row.clone([], copyStyles);
+            var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')), copyStyles);
             var shadowTable = new DDTShadowTable(clonedTable.element);
             var shadowRow = new DDTShadowRow(clonedRow.element);
             var width = this.element.outerWidth();
@@ -490,6 +511,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         function DragAndDropTable(table) {
             this.verticalOnly = true;
             this.boundToTBody = true;
+            this.copyStyles = false;
             this.enabled = true;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
@@ -520,7 +542,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DragAndDropTable.prototype.dragRow = function (rowElement, mousePosition) {
             var _this = this;
             var row = new DDTRow(rowElement);
-            var shadow = this.table.createShadow(row);
+            var shadow = this.table.createShadow(row, this.copyStyles);
             var rowPosition = DDTCoords.fromJQuery(rowElement);
             var diff = mousePosition.minus(rowPosition);
 

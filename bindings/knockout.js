@@ -40,7 +40,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
         return str[0].toUpperCase() + str.substr(1);
     }
 
-    ['verticalOnly', 'boundToTBody'].forEach(function(option) {
+    ['verticalOnly', 'boundToTBody', 'copyStyles'].forEach(function(option) {
         var key = 'ddt' + capitalise(option);
 
         ko.bindingHandlers[key] = {
