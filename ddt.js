@@ -534,8 +534,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 colgroup.append($(document.createElement('col')).width($(td).outerWidth()));
             });
 
-            console.log(colgroup.html());
-
             this.element.prepend(colgroup);
         };
         return DDTShadowTable;
