@@ -52,7 +52,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
                     throw new DDTErrorNoDDTBinding();
                 }
 
-                table[option] = value;
+                table.options[option] = value;
             }
         };
     });
