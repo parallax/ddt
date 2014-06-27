@@ -545,6 +545,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this.verticalOnly = true;
             this.boundToTBody = true;
             this.enabled = true;
+            this.hasChanged = false;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
             this.window = new DDTElement($(window));
@@ -614,13 +615,19 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
         DragAndDropTable.prototype.endDrag = function (row, shadow) {
             shadow.element.remove();
-
             row.show();
+
+            if (this.hasChanged) {
+                this.emitValues(this.$rows);
+
+                this.hasChanged = false;
+                this.$rows = null;
+            }
         };
 
         DragAndDropTable.prototype.handleRowSwapping = function (row, shadow, coords) {
             var _this = this;
-            var rows = this.table.element.find(DragAndDropTable.rowSelector);
+            var rows = this.$rows = this.table.element.find(DragAndDropTable.rowSelector);
 
             var res = _.some(rows, function (tr) {
                 // If this is the element we're dragging, we don't want to do any calculations on it
@@ -652,7 +659,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             });
 
             if (res) {
-                this.emitValues(rows);
+                this.hasChanged = true;
             }
         };
 
