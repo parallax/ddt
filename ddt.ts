@@ -337,7 +337,7 @@ export class DDTPositionableElement extends DDTElement {
      * @todo This is far too messy, clean it up
      * @param diff
      */
-    attachToCursor(container : JQuery, diff : DDTCoords = null) {
+    attachToCursor(container : JQuery, diff : DDTCoords = null, axis : DDTAxis[] = null) {
 
         var bodyElement = new DDTElement($('body'));
 
@@ -350,7 +350,7 @@ export class DDTPositionableElement extends DDTElement {
                 position = position.minus(diff);
             }
 
-            this.setPosition(position);
+            this.setPosition(position, axis);
         };
 
         container
@@ -361,13 +361,27 @@ export class DDTPositionableElement extends DDTElement {
             });
     }
 
-    setPosition(coords : DDTCoords) {
-        this.element.css({
-            top  : coords.y,
-            left : coords.x
-        });
+    setPosition(coords : DDTCoords, axis : DDTAxis[] = null) {
 
-        this.emitter.emit('ddt.position', [coords]);
+        if (!axis) {
+            axis = [DDTAxis.X, DDTAxis.Y]
+        }
+
+        var obj : { top ?: number; left ?: number; } = {};
+
+        if (axis.indexOf(DDTAxis.X) > -1) {
+            obj.left = coords.x;
+        }
+
+        if (axis.indexOf(DDTAxis.Y) > -1) {
+            obj.top = coords.y;
+        }
+
+        this.element.css(obj);
+
+        var pos = this.element.offset();
+
+        this.emitter.emit('ddt.position', [new DDTCoords(pos.left, pos.top)]);
     }
 }
 
@@ -433,12 +447,14 @@ export class DragAndDropTable {
 
     public emitter : DDTEventEmitter;
 
+    private verticalOnly = true;
+
     private table     : DDTTable;
     private window    : DDTElement;
     private $document : JQuery;
 
-    private enabled   = true;
-    private scrolling = false;
+    private enabled      = true;
+    private scrolling    = false;
 
     private static rowSelector = 'tbody tr';
 
@@ -484,8 +500,9 @@ export class DragAndDropTable {
         }
 
         var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
+        var axis          = this.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
 
-        shadow.attachToCursor(this.$document, diff.add(spacingCoords));
+        shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis);
         shadow.setPosition(rowPosition.minus(spacingCoords));
 
         this.$document.one('mouseup', () => this.endDrag(row, shadow));
