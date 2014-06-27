@@ -474,8 +474,7 @@ export class DragAndDropTable {
     private window    : DDTElement;
     private $document : JQuery;
 
-    private enabled      = true;
-    private scrolling    = false;
+    private enabled = true;
 
     private static rowSelector = 'tbody tr';
 
