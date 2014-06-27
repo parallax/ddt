@@ -242,10 +242,11 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         /**
         * Calculate if an element is in the bounds of its parent
         */
-        DDTElement.prototype.calculateBounds = function (parent, diffY) {
+        DDTElement.prototype.calculateBounds = function (parent, diffY, positions) {
             if (typeof diffY === "undefined") { diffY = 0; }
+            if (typeof positions === "undefined") { positions = null; }
             // Just some calculations
-            var ourOffset = this.offsetTop();
+            var ourOffset = positions ? positions.y : this.offsetTop();
             var ourHeight = this.element.outerHeight();
             var parentOffset = parent.offsetTop();
             var parentHeight = parent.element.outerHeight();
@@ -362,6 +363,20 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
                 if (diff) {
                     position = position.minus(diff);
+                }
+
+                if (boundElement) {
+                    var bounds = _this.calculateBounds(boundElement, 0, position);
+
+                    if (bounds !== 1 /* IN */) {
+                        var newPos = boundElement.offsetTop();
+
+                        if (bounds === 2 /* HIGH */) {
+                            newPos += boundElement.element.height() - _this.element.height();
+                        }
+
+                        position = new DDTCoords(position.x, newPos);
+                    }
                 }
 
                 _this.setPosition(position, axis);
