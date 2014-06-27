@@ -50,6 +50,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this.handlers[event].push(handler);
         };
 
+        DDTEventEmitter.prototype.off = function (event, handler) {
+            this.handlers[event].splice(this.handlers[event].indexOf(handler), 1);
+        };
+
         DDTEventEmitter.prototype.emit = function (event, args) {
             var _this = this;
             (this.handlers[event] || []).forEach(function (h) {
