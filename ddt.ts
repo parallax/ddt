@@ -246,9 +246,9 @@ export class DDTElement {
     /**
      * Calculate if an element is in the bounds of its parent
      */
-    calculateBounds(parent : DDTElement, diffY : number = 0) : DDTBoundsResult {
+    calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTCoords = null) : DDTBoundsResult {
         // Just some calculations
-        var ourOffset    = this.offsetTop();
+        var ourOffset    = positions ? positions.y : this.offsetTop();
         var ourHeight    = this.element.outerHeight();
         var parentOffset = parent.offsetTop();
         var parentHeight = parent.element.outerHeight();
@@ -353,6 +353,20 @@ export class DDTPositionableElement extends DDTElement {
 
             if (diff) {
                 position = position.minus(diff);
+            }
+
+            if (boundElement) {
+                var bounds = this.calculateBounds(boundElement, 0, position);
+
+                if (bounds !== DDTBoundsResult.IN) {
+                    var newPos = boundElement.offsetTop();
+
+                    if (bounds === DDTBoundsResult.HIGH) {
+                        newPos += boundElement.element.height() - this.element.height();
+                    }
+
+                    position = new DDTCoords(position.x, newPos);
+                }
             }
 
             this.setPosition(position, axis);
