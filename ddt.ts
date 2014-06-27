@@ -533,11 +533,22 @@ export class DragAndDropTable {
                 return;
             }
 
-            var rowCoords = DDTCoords.fromElement(tr);
-            var $tr       = $(tr);
+            var rowCoords   = DDTCoords.fromElement(tr);
+            var $tr         = $(tr);
+            var tableBounds = shadow.calculateBounds(this.table);
 
-            if (coords.isOverAxis(rowCoords, $tr.height() / 2, DDTAxis.Y)) {
-                row.swap(new DDTElement($tr));
+            var toSwapWith : JQuery;
+
+            if (tableBounds === DDTBoundsResult.LOW) {
+                toSwapWith = $(rows[0]);
+            } else if (tableBounds === DDTBoundsResult.HIGH) {
+                toSwapWith = $(_.last(rows));
+            } else if (coords.isOverAxis(rowCoords, $tr.height() / 2, DDTAxis.Y)) {
+                toSwapWith = $tr;
+            }
+
+            if (toSwapWith && row.getNode() !== toSwapWith[0]) {
+                row.swap(new DDTElement(toSwapWith));
                 DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
 
                 return true;

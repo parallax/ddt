@@ -550,6 +550,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DragAndDropTable.prototype.handleRowSwapping = function (row, shadow, coords) {
+            var _this = this;
             var rows = this.table.element.find(DragAndDropTable.rowSelector);
 
             var res = _.some(rows, function (tr) {
@@ -560,9 +561,20 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
                 var rowCoords = DDTCoords.fromElement(tr);
                 var $tr = $(tr);
+                var tableBounds = shadow.calculateBounds(_this.table);
 
-                if (coords.isOverAxis(rowCoords, $tr.height() / 2, 1 /* Y */)) {
-                    row.swap(new DDTElement($tr));
+                var toSwapWith;
+
+                if (tableBounds === 0 /* LOW */) {
+                    toSwapWith = $(rows[0]);
+                } else if (tableBounds === 2 /* HIGH */) {
+                    toSwapWith = $(_.last(rows));
+                } else if (coords.isOverAxis(rowCoords, $tr.height() / 2, 1 /* Y */)) {
+                    toSwapWith = $tr;
+                }
+
+                if (toSwapWith && row.getNode() !== toSwapWith[0]) {
+                    row.swap(new DDTElement(toSwapWith));
                     DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
 
                     return true;
