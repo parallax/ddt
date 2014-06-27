@@ -343,6 +343,16 @@ export class DDTElement {
 
         attrs.forEach(attr => clone.setAttribute(attr.name, attr.value));
     }
+
+    static getInheritedBackgroundColor(el : JQuery) : string {
+        var color = el.css('background-color');
+
+        if (!el.is('body') && color === 'transparent' || color === 'rgba(0, 0, 0, 0)') {
+            return DDTElement.getInheritedBackgroundColor(el.parent());
+        }
+
+        return color;
+    }
 }
 
 export class DDTPositionableElement extends DDTElement {
@@ -445,6 +455,7 @@ export class DDTTable extends DDTPositionableElement {
         shadowTable.element.width(width);
 
         shadowTable.setShadowRow(shadowRow);
+        shadowTable.fixBackgroundColor(row);
 
         DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
@@ -473,6 +484,10 @@ export class DDTShadowTable extends DDTTable {
     setShadowRow(row : DDTShadowRow) {
         this.element.find('tbody').append(row.element);
         this.row = row;
+    }
+
+    fixBackgroundColor(row : DDTRow) {
+        this.row.element.css('background', DDTElement.getInheritedBackgroundColor(row.element));
     }
 }
 
@@ -579,6 +594,7 @@ export class DragAndDropTable {
             if (toSwapWith && row.getNode() !== toSwapWith[0]) {
                 row.swap(new DDTElement(toSwapWith));
                 DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
+                shadow.fixBackgroundColor(row);
 
                 return true;
             }
