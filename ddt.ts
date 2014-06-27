@@ -40,6 +40,10 @@ export class DDTEventEmitter {
         this.handlers[event].push(handler);
     }
 
+    public off(event : string, handler : Function) {
+        this.handlers[event].splice(this.handlers[event].indexOf(handler), 1);
+    }
+
     public emit(event : string, args : any[]) {
         (this.handlers[event] || []).forEach(h => h.apply(this, args));
     }
