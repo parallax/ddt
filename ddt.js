@@ -488,9 +488,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
             this.verticalOnly = true;
-            this.boundToTBody = true;
+            this.boundToTBody = false;
             this.enabled = true;
-            this.scrolling = false;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
             this.window = new DDTElement($(window));
