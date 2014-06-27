@@ -347,6 +347,16 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 return clone.setAttribute(attr.name, attr.value);
             });
         };
+
+        DDTElement.getInheritedBackgroundColor = function (el) {
+            var color = el.css('background-color');
+
+            if (!el.is('body') && color === 'transparent' || color === 'rgba(0, 0, 0, 0)') {
+                return DDTElement.getInheritedBackgroundColor(el.parent());
+            }
+
+            return color;
+        };
         DDTElement.notVisible = 'DDTNotVisible';
         DDTElement.shadowTable = 'DDTShadowTable';
         DDTElement.shadowRow = 'DDTShadowRow';
@@ -475,6 +485,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             shadowTable.element.width(width);
 
             shadowTable.setShadowRow(shadowRow);
+            shadowTable.fixBackgroundColor(row);
 
             DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
@@ -502,6 +513,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTShadowTable.prototype.setShadowRow = function (row) {
             this.element.find('tbody').append(row.element);
             this.row = row;
+        };
+
+        DDTShadowTable.prototype.fixBackgroundColor = function (row) {
+            this.row.element.css('background', DDTElement.getInheritedBackgroundColor(row.element));
         };
         return DDTShadowTable;
     })(DDTTable);
@@ -613,6 +628,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                 if (toSwapWith && row.getNode() !== toSwapWith[0]) {
                     row.swap(new DDTElement(toSwapWith));
                     DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
+                    shadow.fixBackgroundColor(row);
 
                     return true;
                 }
