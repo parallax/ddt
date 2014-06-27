@@ -51,7 +51,7 @@
 </head>
 <body>
 <button data-bind="click: toggle">Toggle Enabled</button>
-<table class="table" data-bind="ddt: enabled">
+<table class="table" data-bind="ddt: enabled, ddtEventOrder: order">
     <colgroup>
         <col><col width=100><col>
     </colgroup>
@@ -105,25 +105,21 @@
 
     require(['ddt', 'knockout', 'bindings/knockout'], function(ddt, ko) {
 
-        // var table = window.table = new ddt.DragAndDropTable($('table'));
-//        var table = window.table = $('table').ddt();
-
         var viewModel = {
             enabled : ko.observable(true),
 
             toggle : function() {
                 viewModel.enabled(!viewModel.enabled());
+            },
+
+            order : function(order) {
+                console.log(order);
             }
         };
 
         ko.applyBindings(viewModel);
 
-
-//        table.emitter.on('ddt.order', function(order) {
-//            console.log(order);
-//        });
-//
-//        window.ddt = ddt;
+        window.ddt = ddt;
     });
 </script>
 </body>

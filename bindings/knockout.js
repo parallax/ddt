@@ -36,8 +36,12 @@ define(['ddt', 'knockout'], function(ddt, ko) {
         }
     };
 
+    function capitalise(str) {
+        return str[0].toUpperCase() + str.substr(1);
+    }
+
     ['verticalOnly', 'boundToTBody'].forEach(function(option) {
-        var key = 'ddt' + option[0].toUpperCase() + option.substr(1);
+        var key = 'ddt' + capitalise(option);
 
         ko.bindingHandlers[key] = {
             update : function(element, valueAccessor) {
@@ -51,6 +55,23 @@ define(['ddt', 'knockout'], function(ddt, ko) {
                 table[option] = value;
             }
         };
+    });
+
+    ['order'].forEach(function(eventName) {
+        var key = 'ddtEvent' + capitalise(eventName);
+
+        ko.bindingHandlers[key] = {
+            init : function(element, valueAccessor) {
+                var value = ko.unwrap(valueAccessor());
+                var table = ko.utils.domData.get(element, DATA_KEY);
+
+                if (!table) {
+                    throw new DDTErrorNoDDTBinding();
+                }
+
+                table.emitter.on('ddt.' + eventName, value);
+            }
+        }
     })
 
     return {
