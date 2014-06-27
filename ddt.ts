@@ -337,9 +337,14 @@ export class DDTPositionableElement extends DDTElement {
      * @todo This is far too messy, clean it up
      * @param diff
      */
-    attachToCursor(container : JQuery, diff : DDTCoords = null, axis : DDTAxis[] = null) {
+    attachToCursor(container : JQuery, diff : DDTCoords = null, axis : DDTAxis[] = null, bound : Element = null) {
 
         var bodyElement = new DDTElement($('body'));
+        var boundElement : DDTElement;
+
+        if (bound) {
+            boundElement = new DDTElement($(bound));
+        }
 
         bodyElement.notSelectable();
 
@@ -348,6 +353,21 @@ export class DDTPositionableElement extends DDTElement {
 
             if (diff) {
                 position = position.minus(diff);
+            }
+
+
+            if (bound) {
+                var bounds = this.calculateBounds(boundElement);
+                var offset = boundElement.offsetTop();
+                var height = boundElement.element.height();
+
+                if (bounds === DDTBoundsResult.LOW) {
+                    position = new DDTCoords(position.x, offset);
+                }
+
+                if (bounds === DDTBoundsResult.HIGH) {
+                    position = new DDTCoords(position.x, offset + height - this.element.height());
+                }
             }
 
             this.setPosition(position, axis);
@@ -448,7 +468,7 @@ export class DragAndDropTable {
     public emitter : DDTEventEmitter;
 
     public verticalOnly = true;
-
+    public boundToTBody = false;
 
     private table     : DDTTable;
     private window    : DDTElement;
@@ -503,7 +523,7 @@ export class DragAndDropTable {
         var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
         var axis          = this.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
 
-        shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis);
+        shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
         shadow.setPosition(rowPosition.minus(spacingCoords));
 
         this.$document.one('mouseup', () => this.endDrag(row, shadow));
