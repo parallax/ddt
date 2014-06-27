@@ -26,8 +26,8 @@
       <file leaf-file-name="ddt.ts" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ddt.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.091776796" vertical-offset="11775" max-vertical-offset="15300">
-              <caret line="476" column="20" selection-start-line="476" selection-start-column="20" selection-end-line="476" selection-end-column="20" />
+            <state vertical-scroll-proportion="0.2753304" vertical-offset="8250" max-vertical-offset="14925">
+              <caret line="345" column="20" selection-start-line="345" selection-start-column="20" selection-end-line="345" selection-end-column="20" />
               <folding />
             </state>
           </provider>
@@ -46,8 +46,8 @@
       <file leaf-file-name="ddt.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ddt.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="6675" max-vertical-offset="16025">
-              <caret line="267" column="0" selection-start-line="267" selection-start-column="0" selection-end-line="267" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="6300" max-vertical-offset="15675">
+              <caret line="252" column="0" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -323,12 +323,12 @@
       <workItem from="1403792506249" duration="2328000" />
       <workItem from="1403795090332" duration="1835000" />
       <workItem from="1403798225434" duration="888000" />
-      <workItem from="1403870150883" duration="286000" />
+      <workItem from="1403870150883" duration="448000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="23048000" />
+    <option name="totallyTimeSpent" value="23210000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="2560" height="1440" extended-state="0" />
@@ -745,8 +745,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ddt.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="6675" max-vertical-offset="16025">
-          <caret line="267" column="0" selection-start-line="267" selection-start-column="0" selection-end-line="267" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="6300" max-vertical-offset="15675">
+          <caret line="252" column="0" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -777,8 +777,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ddt.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.091776796" vertical-offset="11775" max-vertical-offset="15300">
-          <caret line="476" column="20" selection-start-line="476" selection-start-column="20" selection-end-line="476" selection-end-column="20" />
+        <state vertical-scroll-proportion="0.2753304" vertical-offset="8250" max-vertical-offset="14925">
+          <caret line="345" column="20" selection-start-line="345" selection-start-column="20" selection-end-line="345" selection-end-column="20" />
           <folding />
         </state>
       </provider>

@@ -355,21 +355,6 @@ export class DDTPositionableElement extends DDTElement {
                 position = position.minus(diff);
             }
 
-
-            if (bound) {
-                var bounds = this.calculateBounds(boundElement);
-                var offset = boundElement.offsetTop();
-                var height = boundElement.element.height();
-
-                if (bounds === DDTBoundsResult.LOW) {
-                    position = new DDTCoords(position.x, offset);
-                }
-
-                if (bounds === DDTBoundsResult.HIGH) {
-                    position = new DDTCoords(position.x, offset + height - this.element.height());
-                }
-            }
-
             this.setPosition(position, axis);
         };
 
@@ -468,7 +453,7 @@ export class DragAndDropTable {
     public emitter : DDTEventEmitter;
 
     public verticalOnly = true;
-    public boundToTBody = false;
+    public boundToTBody = true;
 
     private table     : DDTTable;
     private window    : DDTElement;

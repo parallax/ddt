@@ -364,20 +364,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                     position = position.minus(diff);
                 }
 
-                if (bound) {
-                    var bounds = _this.calculateBounds(boundElement);
-                    var offset = boundElement.offsetTop();
-                    var height = boundElement.element.height();
-
-                    if (bounds === 0 /* LOW */) {
-                        position = new DDTCoords(position.x, offset);
-                    }
-
-                    if (bounds === 2 /* HIGH */) {
-                        position = new DDTCoords(position.x, offset + height - _this.element.height());
-                    }
-                }
-
                 _this.setPosition(position, axis);
             };
 
@@ -488,7 +474,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
             this.verticalOnly = true;
-            this.boundToTBody = false;
+            this.boundToTBody = true;
             this.enabled = true;
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
