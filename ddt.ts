@@ -521,6 +521,9 @@ export class DragAndDropTable {
     private $document : JQuery;
 
     private enabled    = true;
+    private hasChanged = false;
+
+    private $rows : JQuery;
 
     private static rowSelector = 'tbody tr';
 
@@ -583,12 +586,18 @@ export class DragAndDropTable {
 
     private endDrag(row : DDTRow, shadow : DDTShadowTable) {
         shadow.element.remove();
-
         row.show();
+
+        if (this.hasChanged) {
+            this.emitValues(this.$rows);
+            
+            this.hasChanged = false;
+            this.$rows      = null;
+        }
     }
 
     private handleRowSwapping(row : DDTRow, shadow : DDTShadowTable, coords : DDTCoords) {
-        var rows = this.table.element.find(DragAndDropTable.rowSelector);
+        var rows = this.$rows = this.table.element.find(DragAndDropTable.rowSelector);
 
         var res = _.some(rows, tr => {
             // If this is the element we're dragging, we don't want to do any calculations on it
@@ -620,7 +629,7 @@ export class DragAndDropTable {
         });
 
         if (res) {
-            this.emitValues(rows);
+            this.hasChanged = true;
         }
     }
 
