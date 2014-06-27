@@ -15,9 +15,7 @@ export interface Event {
 /**
  * An enum representing the two different axis
  */
-export enum DDTAxis { X, Y };
-
-
+export enum DDTAxis { X, Y }
 /**
  * The result of a bounds calculation.
  */
@@ -77,12 +75,12 @@ export class DDTCoords {
     }
 
     gt(coords : DDTCoords, axis: DDTAxis) {
-        var key = DDTCoords.enumToAxis(key);
+        var key = DDTCoords.enumToAxis(axis);
         return this[key] > coords[key];
     }
 
     lt(coords : DDTCoords, axis : DDTAxis) {
-        var key = DDTCoords.enumToAxis(key);
+        var key = DDTCoords.enumToAxis(axis);
         return this[key] < coords[key];
     }
 
@@ -294,7 +292,7 @@ export class DDTElement {
             }
 
             return clone;
-        }
+        };
 
         return new DDTElement(cloneFn(this.element));
     }
@@ -310,7 +308,6 @@ export class DDTElement {
             .pairs()
             .map(p => {
                 var k = DDTCSS.arrowCase(p[0]);
-                var v = p[1];
 
                 if (!ourStyles.getPropertyValue(k) || dummyStyles.getPropertyValue(k) === ourStyles.getPropertyValue(k)) {
                     return null;
@@ -353,13 +350,16 @@ export class DDTElement {
 
         return color;
     }
+
+    static getVerticalBorders(el : JQuery) : number {
+        return (parseInt(el.css('border-top-width'), 10) || 0) + (parseInt(el.css('border-bottom-width'), 10) || 0);
+    }
 }
 
 export class DDTPositionableElement extends DDTElement {
 
     /**
      * @todo This is far too messy, clean it up
-     * @param diff
      */
     attachToCursor(container : JQuery, diff : DDTCoords = null, axis : DDTAxis[] = null, bound : Element = null) {
 
@@ -380,13 +380,14 @@ export class DDTPositionableElement extends DDTElement {
             }
 
             if (boundElement) {
-                var bounds = this.calculateBounds(boundElement, 0, position);
+                var borders = DDTElement.getVerticalBorders(this.element.find('> tbody > tr > td').eq(0));
+                var bounds = this.calculateBounds(boundElement, borders, position);
 
                 if (bounds !== DDTBoundsResult.IN) {
                     var newPos = boundElement.offsetTop();
 
                     if (bounds === DDTBoundsResult.HIGH) {
-                        newPos += boundElement.element.height() - this.element.height();
+                        newPos += boundElement.element.height() - this.element.height() + borders;
                     }
 
                     position = new DDTCoords(position.x, newPos);
@@ -440,22 +441,25 @@ export class DDTShadowRow extends DDTRow {
 }
 
 export class DDTTable extends DDTPositionableElement {
-    createShadow(row : DDTRow, copyStyles : boolean = false) : DDTShadowTable {
-        var clonedRow   = row.clone([], copyStyles);
-        var clonedTable = this.clone(Array.prototype.slice.call(this.element.find('tbody, thead')), copyStyles);
+    createShadow(row : DDTRow) : DDTShadowTable {
+        var tbody       = this.element.children('tbody');
+        var clonedRow   = row.clone();
+        var clonedTable = this.clone(Array.prototype.slice.call(this.element.children('tbody, thead, colgroup')));
         var shadowTable = new DDTShadowTable(clonedTable.element);
         var shadowRow   = new DDTShadowRow(clonedRow.element);
-        var width       = this.element.outerWidth();
+
+        var width : number;
 
         if (this.element.css('border-collapse') === 'collapse') {
-            width += DDTElement.getLeftPaddingAndBorder(this.element.find('tbody'));
+            width = tbody.outerWidth() + (parseInt(tbody.css('border-left-width'), 10) / 2) + (parseInt(tbody.css('border-right-width'), 10) / 2);
+        } else {
+            width = parseInt(this.element.css('width'));
         }
 
-        shadowTable.element.css('height', 'auto');
         shadowTable.element.width(width);
-
         shadowTable.setShadowRow(shadowRow);
         shadowTable.fixBackgroundColor(row);
+        shadowTable.fixColGroup(row);
 
         DDTElement.cloneUniqueStyles(this.getTbody(), shadowTable.getTbody());
 
@@ -489,6 +493,22 @@ export class DDTShadowTable extends DDTTable {
     fixBackgroundColor(row : DDTRow) {
         this.row.element.css('background', DDTElement.getInheritedBackgroundColor(row.element));
     }
+
+    fixColGroup(row : DDTRow) {
+        if (this.element.children('colgroup').length) {
+            this.element.children('colgroup').remove();
+        }
+
+        var colgroup = $(document.createElement('colgroup'));
+
+        row.element.children('td').each((i, td) => {
+            colgroup.append($(document.createElement('col')).width($(td).outerWidth()));
+        });
+
+        console.log(colgroup.html());
+
+        this.element.prepend(colgroup);
+    }
 }
 
 export class DragAndDropTable {
@@ -497,7 +517,6 @@ export class DragAndDropTable {
 
     public verticalOnly = true;
     public boundToTBody = true;
-    public copyStyles   = false;
 
     private table     : DDTTable;
     private window    : DDTElement;
@@ -530,7 +549,7 @@ export class DragAndDropTable {
 
     dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
         var row         = new DDTRow(rowElement);
-        var shadow      = this.table.createShadow(row, this.copyStyles);
+        var shadow      = this.table.createShadow(row);
         var rowPosition = DDTCoords.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
 
@@ -539,20 +558,22 @@ export class DragAndDropTable {
         shadow.element.appendTo('body');
         shadow.emitter.on('ddt.position', coords => this.dragged(row, shadow, coords));
 
-        var styles  = window.getComputedStyle(rowElement[0]);
-        var spacing : number[];
+        var styles = window.getComputedStyle(rowElement[0]);
+
+        var minus : number[] = [0, 0];
 
         if (styles['border-collapse'] === 'separate') {
-            spacing = [0, styles['border-spacing'].split(' ').map(n => parseInt(n, 10))[1]]
+            minus[1] = parseInt(styles['border-spacing'].split(' ')[1], 10);
         } else {
-            spacing = [DDTElement.getLeftPaddingAndBorder(this.table.element.find('tbody')) / 2, 0];
+            var tbody = this.table.element.children('tbody');
+            minus[0] = (parseInt(tbody.css('border-right-width'), 10) - parseInt(tbody.css('border-left-width'), 10)) / 2;
         }
 
-        var spacingCoords = new DDTCoords(spacing[0], spacing[1]);
+        var minusCoords   = new DDTCoords(minus[0], minus[1]);
         var axis          = this.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
 
-        shadow.attachToCursor(this.$document, diff.add(spacingCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
-        shadow.setPosition(rowPosition.minus(spacingCoords));
+        shadow.attachToCursor(this.$document, diff.add(minusCoords), axis, this.boundToTBody ? this.table.getTbody() : null);
+        shadow.setPosition(rowPosition.minus(minusCoords));
 
         this.$document.one('mouseup', () => this.endDrag(row, shadow));
     }
