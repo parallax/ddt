@@ -447,7 +447,8 @@ export class DragAndDropTable {
 
     public emitter : DDTEventEmitter;
 
-    private verticalOnly = true;
+    public verticalOnly = true;
+
 
     private table     : DDTTable;
     private window    : DDTElement;
