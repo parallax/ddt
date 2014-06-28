@@ -594,7 +594,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             };
             this.calculateValues = function () {
                 return _.map(_this.$rows, function (row) {
-                    return $(row).data('value');
+                    return $(row).attr(_this.options.valueAttribute);
                 });
             };
             this.getEventSelector = function () {
@@ -813,7 +813,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             rowSelector: 'tbody > tr',
             handleSelector: null,
             shadowContainer: document.body,
-            cursor: 'default'
+            cursor: 'default',
+            valueAttribute: 'data-value'
         };
 
         DragAndDropTable.window = new DDTElement($(window));
