@@ -13,6 +13,8 @@ var toNumber = n => parseInt(n, 10) || 0;
 export interface Event {
     pageX : number;
     pageY : number;
+
+    currentTarget : Element;
 }
 
 /**
@@ -99,8 +101,8 @@ export class DDTCoords {
         return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
     }
 
-    static fromEvent(event : Event)       { return new DDTCoords(event.pageX, event.pageY); }
-    static fromElement(element : Element) { return DDTCoords.fromJQuery($(element)); }
+    static fromEvent   = (event : JQueryEventObject) => new DDTCoords(event.pageX, event.pageY);
+    static fromElement = (element : Element)         => DDTCoords.fromJQuery($(element));
 
     static fromJQuery(jquery : JQuery) {
         var offset = jquery.offset();
@@ -108,7 +110,7 @@ export class DDTCoords {
         return new DDTCoords(offset.left, offset.top);
     }
 
-    private static enumToAxis(axis : DDTAxis) { return axis === DDTAxis.X ? 'x' : 'y'; }
+    private static enumToAxis = (axis : DDTAxis) => axis === DDTAxis.X ? 'x' : 'y';
 }
 
 /**
@@ -126,23 +128,32 @@ export class DDTCSS {
     /**
      * Define a specific selector with some rules for it
      */
-    static defineSelector(selectorName : string, rules : Object) {
-        if (!DDTCSS.styleElement) {
-            DDTCSS.styleElement = document.createElement('style');
+    static defineSelector(selectorName : string, rules : Object, newElement : boolean = false) {
+        var element : HTMLStyleElement;
+
+        if (newElement || !DDTCSS.styleElement) {
+            element = document.createElement('style');
             // Apparently we need a text node inside the style tag or this won't work.
             // This hasn't been tessed
-            DDTCSS.styleElement.appendChild(document.createTextNode(''));
+            element.appendChild(document.createTextNode(''));
 
-            document.head.appendChild(DDTCSS.styleElement);
+            document.head.appendChild(element);
+        } else {
+            element = DDTCSS.styleElement;
         }
 
+        if (!newElement) {
+            DDTCSS.styleElement = element;
+        }
 
-        var sheet = <CSSStyleSheet> DDTCSS.styleElement.sheet;
+        var sheet = <CSSStyleSheet> element.sheet;
         sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
+
+        return element;
     }
 
-    static defineClass(className : string, rules : Object) {
-        return DDTCSS.defineSelector('.' + className, rules);
+    static defineClass(className : string, rules : Object, newElement : boolean = false) {
+        return DDTCSS.defineSelector('.' + className, rules, newElement);
     }
 
     /**
@@ -214,14 +225,6 @@ export class DDTElement {
     }
 
     /**
-     * Get the amount of padding and border an element has on its left side
-     */
-    static getLeftPaddingAndBorder(element : JQuery) : number {
-        return toNumber(element.css('border-left-width')) +
-               toNumber(element.css('border-top-width'));
-    }
-
-    /**
      * Calculate if an element is in the bounds of its parent
      */
     calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTCoords = null) : DDTBoundsResult {
@@ -277,9 +280,35 @@ export class DDTElement {
         return new DDTElement(cloneFn(this.element));
     }
 
+
+    /**
+     * Get the amount of padding and border an element has on its left side
+     */
+    static getLeftPaddingAndBorder(element : JQuery) : number {
+        return toNumber(element.css('border-left-width')) +
+               toNumber(element.css('border-top-width'));
+    }
+
+    static getParentWithSelector(el : JQuery, selector : string) : JQuery {
+        var worker = (jq : JQuery) => {
+            if (jq.is(selector)) {
+                return jq;
+            }
+
+            if (jq.is(document.body)) {
+                return null;
+            }
+
+            return worker(jq.parent());
+        };
+
+        return worker(el);
+    }
+
     static getUniqueStyles(element : Element, ignore : string[] = []) : Object {
         var ourStyles = window.getComputedStyle(element);
         var dummy     = document.createElement(element.tagName);
+
         document.body.appendChild(dummy);
 
         var dummyStyles = window.getComputedStyle(dummy);
@@ -353,7 +382,7 @@ export class DDTPositionableElement extends DDTElement {
 
         bodyElement.notSelectable();
 
-        var updateFunction = (event : Event) => {
+        var updateFunction = (event : JQueryEventObject) => {
             var position = DDTCoords.fromEvent(event);
 
             if (diff) {
@@ -491,9 +520,13 @@ export class DDTShadowTable extends DDTTable {
 
 export interface DragAndDropTableOptions {
     verticalOnly    : boolean;
-    boundToTBody    : boolean;
+    bindToTable     : boolean;
     rowSelector     : string;
+    handleSelector  : string;
+    ignoreSelector  : string;
+    cursor          : string;
     shadowContainer : Element;
+    containment     : Element;
 }
 
 export class DragAndDropTable {
@@ -503,9 +536,13 @@ export class DragAndDropTable {
 
     public static defaultOptions = {
         verticalOnly    : true,
-        boundToTBody    : true,
+        containment     : null,
+        bindToTable     : true,
+        ignoreSelector  : null,
         rowSelector     : '> tbody > tr',
-        shadowContainer : document.body
+        handleSelector  : null,
+        shadowContainer : document.body,
+        cursor          : 'default'
     };
 
     private table      : DDTTable;
@@ -531,10 +568,19 @@ export class DragAndDropTable {
     }
 
     wireEvents() {
-        this.table.element.on('mousedown', this.options.rowSelector, e => {
-            if (this.enabled && e.which === 1) {
-                this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e))
+        this.table.element.on('mousedown', this.getEventSelector(), e => {
+
+            if (!this.enabled || e.which !== 1) {
+                return;
             }
+
+            var $row = this.getRowFromEvent(e);
+
+            if (this.options.ignoreSelector && $row.is(this.options.ignoreSelector)) {
+                return;
+            }
+
+            this.dragRow($row, DDTCoords.fromEvent(e))
         });
     }
 
@@ -545,6 +591,7 @@ export class DragAndDropTable {
         var diff        = mousePosition.minus(rowPosition);
         var tbody       = this.table.element.children('tbody');
         var offBy       = this.calculateOffBy(rowElement[0], tbody);
+        var cssEl       = DDTCSS.defineSelector('body', { cursor : this.options.cursor }, true);
 
         shadow.element.appendTo(this.options.shadowContainer);
         shadow.emitter.on('ddt.position', coords => this.dragged(row, shadow, coords));
@@ -562,7 +609,7 @@ export class DragAndDropTable {
         // Hide the row that we've started to drag, as the shadow has replaced it
         row.hide();
 
-        DragAndDropTable.$document.one('mouseup', () => this.endDrag(row, shadow));
+        DragAndDropTable.$document.one('mouseup', () => this.endDrag(row, shadow, cssEl));
     }
 
 
@@ -570,10 +617,35 @@ export class DragAndDropTable {
     enable()        { this._options.enabled = true; }
     toggleEnabled() { this._options.enabled ? this.disable() : this.enable(); }
 
-    private getBindingElement() { return this.options.boundToTBody ? this.table.getTbody() : null }
-    private getMovingAxis()     { return this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y]; }
-    private getRows()           { return this.table.element.find(this.options.rowSelector); }
-    private calculateValues()   { return _.map(this.$rows, row => $(row).data('value')); }
+    isEnabled                = () => this._options.enabled;
+
+    private getMovingAxis    = () => this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
+    private getRows          = () => this.table.element.find(this.options.rowSelector);
+    private calculateValues  = () => _.map(this.$rows, row => $(row).data('value'));
+    private getEventSelector = () => this.options.handleSelector || this.options.rowSelector;
+
+    private getRowFromEvent(e : JQueryEventObject) {
+        var $target = $(e.currentTarget);
+
+        if (this.options.rowSelector) {
+            return $target;
+        }
+
+        return DDTElement.getParentWithSelector($target, this.options.rowSelector);
+    }
+
+    private getBindingElement() {
+        
+        if (this.options.containment) {
+            return this.options.containment;
+        }
+
+        if (this.options.bindToTable) {
+            return this.table.getTbody();
+        }
+
+        return null;
+    }
 
     private calculateOffBy(row : Element, tbody : JQuery) : DDTCoords {
         var styles = window.getComputedStyle(row);
@@ -593,9 +665,10 @@ export class DragAndDropTable {
         this.handleRowSwapping(row, shadow, coords);
     }
 
-    private endDrag(row : DDTRow, shadow : DDTShadowTable) {
+    private endDrag(row : DDTRow, shadow : DDTShadowTable, cssEl : HTMLStyleElement) {
         shadow.element.remove();
         row.show();
+        cssEl.parentNode.removeChild(cssEl);
 
         if (this.couldHaveChanged) {
 
@@ -687,7 +760,5 @@ DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + 
     WebkitUserSelect : 'none',
     MsUserSelect     : 'none',
     OUserSelect      : 'none',
-    userSelect       : 'none',
-
-    cursor           : 'default'
+    userSelect       : 'none'
 });

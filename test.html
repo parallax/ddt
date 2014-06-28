@@ -42,6 +42,10 @@
             padding: 10px 5px 5px 3px;
         }
 
+        .table tr[notDraggable] {
+            background: grey !important;
+        }
+
         .z {
             position: relative;
             z-index: 9;
@@ -54,7 +58,7 @@
 </head>
 <body>
 <button data-bind="click: toggle">Toggle Enabled</button>
-<table class="table" data-bind="ddt: enabled, ddtEventOrder: order, ddtShadowContainer: document.getElementById('shadowContainer')">
+<table class="table" data-bind="ddt: enabled, ddtEventOrder: order, ddtShadowContainer: document.getElementById('shadowContainer'), ddtIgnoreSelector: '[notDraggable]'">
     <colgroup>
         <col><col width=100><col>
     </colgroup>
@@ -86,7 +90,7 @@
             <td>11</td>
             <td>12</td>
         </tr>
-        <tr data-value=13>
+        <tr data-value=13 notDraggable>
             <td>13</td>
             <td>14</td>
             <td>15</td>
