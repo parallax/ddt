@@ -72,7 +72,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
                 table.emitter.on('ddt.' + eventName, value);
             }
         }
-    })
+    });
 
     return {
         DDTErrorNoDDTBinding : DDTErrorNoDDTBinding

@@ -289,13 +289,13 @@ export class DDTElement {
                toNumber(element.css('border-top-width'));
     }
 
-    static getParentWithSelector(el : JQuery, selector : string) : JQuery {
+    static getParentWithSelector(el : JQuery, selector : string, topEl = document.body) : JQuery {
         var worker = (jq : JQuery) => {
             if (jq.is(selector)) {
                 return jq;
             }
 
-            if (jq.is(document.body)) {
+            if (jq.is(topEl)) {
                 return null;
             }
 
@@ -539,7 +539,7 @@ export class DragAndDropTable {
         containment     : null,
         bindToTable     : true,
         ignoreSelector  : null,
-        rowSelector     : '> tbody > tr',
+        rowSelector     : 'tbody > tr',
         handleSelector  : null,
         shadowContainer : document.body,
         cursor          : 'default'
@@ -568,13 +568,17 @@ export class DragAndDropTable {
     }
 
     wireEvents() {
-        this.table.element.on('mousedown', this.getEventSelector(), e => {
+        this.table.element.on('mousedown', e => {
 
             if (!this.enabled || e.which !== 1) {
                 return;
             }
 
             var $row = this.getRowFromEvent(e);
+
+            if (!$row) {
+                return;
+            }
 
             if (this.options.ignoreSelector && $row.is(this.options.ignoreSelector)) {
                 return;
@@ -617,7 +621,7 @@ export class DragAndDropTable {
     enable()        { this._options.enabled = true; }
     toggleEnabled() { this._options.enabled ? this.disable() : this.enable(); }
 
-    isEnabled                = () => this._options.enabled;
+    isEnabled = () => this._options.enabled;
 
     private getMovingAxis    = () => this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
     private getRows          = () => this.table.element.find(this.options.rowSelector);
@@ -625,13 +629,17 @@ export class DragAndDropTable {
     private getEventSelector = () => this.options.handleSelector || this.options.rowSelector;
 
     private getRowFromEvent(e : JQueryEventObject) {
-        var $target = $(e.currentTarget);
+        var $target = $(e.target);
+        var selector = this.getEventSelector();
+        var node = this.table.getNode();
 
-        if (this.options.rowSelector) {
-            return $target;
+        var clicked = DDTElement.getParentWithSelector($target, selector, node);
+
+        if (!clicked || !this.options.handleSelector) {
+            return clicked;
         }
 
-        return DDTElement.getParentWithSelector($target, this.options.rowSelector);
+        return DDTElement.getParentWithSelector(clicked, this.options.rowSelector, node);
     }
 
     private getBindingElement() {
