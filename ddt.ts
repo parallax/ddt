@@ -525,6 +525,7 @@ export interface DragAndDropTableOptions {
     handleSelector  : string;
     ignoreSelector  : string;
     cursor          : string;
+    valueAttribute  : string;
     shadowContainer : Element;
     containment     : Element;
 }
@@ -542,7 +543,8 @@ export class DragAndDropTable {
         rowSelector     : 'tbody > tr',
         handleSelector  : null,
         shadowContainer : document.body,
-        cursor          : 'default'
+        cursor          : 'default',
+        valueAttribute  : 'data-value'
     };
 
     private table      : DDTTable;
@@ -625,7 +627,7 @@ export class DragAndDropTable {
 
     private getMovingAxis    = () => this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
     private getRows          = () => this.table.element.find(this.options.rowSelector);
-    private calculateValues  = () => _.map(this.$rows, row => $(row).data('value'));
+    private calculateValues  = () => _.map(this.$rows, row => $(row).attr(this.options.valueAttribute));
     private getEventSelector = () => this.options.handleSelector || this.options.rowSelector;
 
     private getRowFromEvent(e : JQueryEventObject) {
