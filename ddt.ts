@@ -494,18 +494,26 @@ export class DDTShadowTable extends DDTTable {
     }
 }
 
+export interface DragAndDropTableOptions {
+    verticalOnly : boolean;
+    boundToTBody : boolean;
+    rowSelector  : string;
+}
+
 export class DragAndDropTable {
 
     public emitter : DDTEventEmitter;
+    public options : DragAndDropTableOptions;
 
-    public options = {
+    public static defaultOptions = {
         verticalOnly : true,
         boundToTBody : true,
         rowSelector  : '> tbody > tr'
     };
 
-    private table : DDTTable;
-    private $rows : JQuery;
+    private table      : DDTTable;
+    private $rows      : JQuery;
+    private lastValues : any[];
 
     private enabled          = true;
     private couldHaveChanged = false;
@@ -515,9 +523,8 @@ export class DragAndDropTable {
     private static window    = new DDTElement($(window));
     private static $document = $(document);
 
-    private lastValues : any[];
-
     constructor(table : JQuery) {
+        this.options    = _.cloneDeep(DragAndDropTable.defaultOptions);
         this.table      = new DDTTable(table);
         this.emitter    = new DDTEventEmitter();
         this.$rows      = this.getRows();
