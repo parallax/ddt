@@ -367,7 +367,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
         DDTElement.notVisible = 'DDTNotVisible';
         DDTElement.shadowTable = 'DDTShadowTable';
-        DDTElement.shadowRow = 'DDTShadowRow';
         DDTElement.noSelect = 'DDTNoSelect';
         return DDTElement;
     })();
@@ -452,6 +451,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     })(DDTElement);
     exports.DDTPositionableElement = DDTPositionableElement;
 
+    // @todo Investigate removing this
     var DDTRow = (function (_super) {
         __extends(DDTRow, _super);
         function DDTRow() {
@@ -461,12 +461,11 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     })(DDTElement);
     exports.DDTRow = DDTRow;
 
+    // @todo Investigate removing this
     var DDTShadowRow = (function (_super) {
         __extends(DDTShadowRow, _super);
-        function DDTShadowRow(element) {
-            _super.call(this, element);
-
-            element.addClass(DDTElement.shadowRow);
+        function DDTShadowRow() {
+            _super.apply(this, arguments);
         }
         return DDTShadowRow;
     })(DDTRow);
@@ -749,7 +748,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
     DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
-    DDTCSS.defineClass(DDTElement.shadowRow, { position: 'relative !important ' });
     DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
         WebkitUserSelect: 'none',
         MsUserSelect: 'none',

@@ -173,7 +173,6 @@ export class DDTElement {
     // Some class names
     static notVisible  = 'DDTNotVisible';
     static shadowTable = 'DDTShadowTable';
-    static shadowRow   = 'DDTShadowRow';
     static noSelect    = 'DDTNoSelect';
 
     element : JQuery;
@@ -411,16 +410,11 @@ export class DDTPositionableElement extends DDTElement {
     }
 }
 
+// @todo Investigate removing this
 export class DDTRow extends DDTElement {}
 
-export class DDTShadowRow extends DDTRow {
-
-    constructor(element : JQuery) {
-        super(element);
-
-        element.addClass(DDTElement.shadowRow);
-    }
-}
+// @todo Investigate removing this
+export class DDTShadowRow extends DDTRow {}
 
 export class DDTTable extends DDTPositionableElement {
     createShadow(row : DDTRow) : DDTShadowTable {
@@ -689,7 +683,6 @@ export class DragAndDropTable {
 
 DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
 DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
-DDTCSS.defineClass(DDTElement.shadowRow, { position : 'relative !important ' });
 DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
     WebkitUserSelect : 'none',
     MsUserSelect     : 'none',
