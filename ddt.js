@@ -111,17 +111,16 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
         };
 
+        DDTCoords.fromJQuery = function (jquery) {
+            var offset = jquery.offset();
+
+            return new DDTCoords(offset.left, offset.top);
+        };
         DDTCoords.fromEvent = function (event) {
             return new DDTCoords(event.pageX, event.pageY);
         };
         DDTCoords.fromElement = function (element) {
             return DDTCoords.fromJQuery($(element));
-        };
-
-        DDTCoords.fromJQuery = function (jquery) {
-            var offset = jquery.offset();
-
-            return new DDTCoords(offset.left, offset.top);
         };
 
         DDTCoords.enumToAxis = function (axis) {
@@ -145,23 +144,35 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         /**
         * Define a specific selector with some rules for it
         */
-        DDTCSS.defineSelector = function (selectorName, rules) {
-            if (!DDTCSS.styleElement) {
-                DDTCSS.styleElement = document.createElement('style');
+        DDTCSS.defineSelector = function (selectorName, rules, newElement) {
+            if (typeof newElement === "undefined") { newElement = false; }
+            var element;
+
+            if (newElement || !DDTCSS.styleElement) {
+                element = document.createElement('style');
 
                 // Apparently we need a text node inside the style tag or this won't work.
                 // This hasn't been tessed
-                DDTCSS.styleElement.appendChild(document.createTextNode(''));
+                element.appendChild(document.createTextNode(''));
 
-                document.head.appendChild(DDTCSS.styleElement);
+                document.head.appendChild(element);
+            } else {
+                element = DDTCSS.styleElement;
             }
 
-            var sheet = DDTCSS.styleElement.sheet;
+            if (!newElement) {
+                DDTCSS.styleElement = element;
+            }
+
+            var sheet = element.sheet;
             sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
+
+            return element;
         };
 
-        DDTCSS.defineClass = function (className, rules) {
-            return DDTCSS.defineSelector('.' + className, rules);
+        DDTCSS.defineClass = function (className, rules, newElement) {
+            if (typeof newElement === "undefined") { newElement = false; }
+            return DDTCSS.defineSelector('.' + className, rules, newElement);
         };
 
         /**
@@ -237,13 +248,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         /**
-        * Get the amount of padding and border an element has on its left side
-        */
-        DDTElement.getLeftPaddingAndBorder = function (element) {
-            return toNumber(element.css('border-left-width')) + toNumber(element.css('border-top-width'));
-        };
-
-        /**
         * Calculate if an element is in the bounds of its parent
         */
         DDTElement.prototype.calculateBounds = function (parent, diffY, positions) {
@@ -301,10 +305,34 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return new DDTElement(cloneFn(this.element));
         };
 
+        /**
+        * Get the amount of padding and border an element has on its left side
+        */
+        DDTElement.getLeftPaddingAndBorder = function (element) {
+            return toNumber(element.css('border-left-width')) + toNumber(element.css('border-top-width'));
+        };
+
+        DDTElement.getParentWithSelector = function (el, selector) {
+            var worker = function (jq) {
+                if (jq.is(selector)) {
+                    return jq;
+                }
+
+                if (jq.is(document.body)) {
+                    return null;
+                }
+
+                return worker(jq.parent());
+            };
+
+            return worker(el);
+        };
+
         DDTElement.getUniqueStyles = function (element, ignore) {
             if (typeof ignore === "undefined") { ignore = []; }
             var ourStyles = window.getComputedStyle(element);
             var dummy = document.createElement(element.tagName);
+
             document.body.appendChild(dummy);
 
             var dummyStyles = window.getComputedStyle(dummy);
@@ -550,9 +578,27 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
+            var _this = this;
             this.enabled = true;
             this.couldHaveChanged = false;
             this._options = { enabled: false };
+            this.isEnabled = function () {
+                return _this._options.enabled;
+            };
+            this.getMovingAxis = function () {
+                return _this.options.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
+            };
+            this.getRows = function () {
+                return _this.table.element.find(_this.options.rowSelector);
+            };
+            this.calculateValues = function () {
+                return _.map(_this.$rows, function (row) {
+                    return $(row).data('value');
+                });
+            };
+            this.getEventSelector = function () {
+                return _this.options.handleSelector || _this.options.rowSelector;
+            };
             this.options = _.clone(DragAndDropTable.defaultOptions);
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
@@ -563,10 +609,18 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
-            this.table.element.on('mousedown', this.options.rowSelector, function (e) {
-                if (_this.enabled && e.which === 1) {
-                    _this.dragRow($(e.currentTarget), DDTCoords.fromEvent(e));
+            this.table.element.on('mousedown', this.getEventSelector(), function (e) {
+                if (!_this.enabled || e.which !== 1) {
+                    return;
                 }
+
+                var $row = _this.getRowFromEvent(e);
+
+                if (_this.options.ignoreSelector && $row.is(_this.options.ignoreSelector)) {
+                    return;
+                }
+
+                _this.dragRow($row, DDTCoords.fromEvent(e));
             });
         };
 
@@ -578,6 +632,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var diff = mousePosition.minus(rowPosition);
             var tbody = this.table.element.children('tbody');
             var offBy = this.calculateOffBy(rowElement[0], tbody);
+            var cssEl = DDTCSS.defineSelector('body', { cursor: this.options.cursor }, true);
 
             shadow.element.appendTo(this.options.shadowContainer);
             shadow.emitter.on('ddt.position', function (coords) {
@@ -593,7 +648,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             row.hide();
 
             DragAndDropTable.$document.one('mouseup', function () {
-                return _this.endDrag(row, shadow);
+                return _this.endDrag(row, shadow, cssEl);
             });
         };
 
@@ -607,19 +662,26 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this._options.enabled ? this.disable() : this.enable();
         };
 
+        DragAndDropTable.prototype.getRowFromEvent = function (e) {
+            var $target = $(e.currentTarget);
+
+            if (this.options.rowSelector) {
+                return $target;
+            }
+
+            return DDTElement.getParentWithSelector($target, this.options.rowSelector);
+        };
+
         DragAndDropTable.prototype.getBindingElement = function () {
-            return this.options.boundToTBody ? this.table.getTbody() : null;
-        };
-        DragAndDropTable.prototype.getMovingAxis = function () {
-            return this.options.verticalOnly ? [1 /* Y */] : [0 /* X */, 1 /* Y */];
-        };
-        DragAndDropTable.prototype.getRows = function () {
-            return this.table.element.find(this.options.rowSelector);
-        };
-        DragAndDropTable.prototype.calculateValues = function () {
-            return _.map(this.$rows, function (row) {
-                return $(row).data('value');
-            });
+            if (this.options.containment) {
+                return this.options.containment;
+            }
+
+            if (this.options.bindToTable) {
+                return this.table.getTbody();
+            }
+
+            return null;
         };
 
         DragAndDropTable.prototype.calculateOffBy = function (row, tbody) {
@@ -640,9 +702,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this.handleRowSwapping(row, shadow, coords);
         };
 
-        DragAndDropTable.prototype.endDrag = function (row, shadow) {
+        DragAndDropTable.prototype.endDrag = function (row, shadow, cssEl) {
             shadow.element.remove();
             row.show();
+            cssEl.parentNode.removeChild(cssEl);
 
             if (this.couldHaveChanged) {
                 var values = this.calculateValues();
@@ -735,9 +798,13 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
         DragAndDropTable.defaultOptions = {
             verticalOnly: true,
-            boundToTBody: true,
+            containment: null,
+            bindToTable: true,
+            ignoreSelector: null,
             rowSelector: '> tbody > tr',
-            shadowContainer: document.body
+            handleSelector: null,
+            shadowContainer: document.body,
+            cursor: 'default'
         };
 
         DragAndDropTable.window = new DDTElement($(window));
@@ -752,7 +819,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         WebkitUserSelect: 'none',
         MsUserSelect: 'none',
         OUserSelect: 'none',
-        userSelect: 'none',
-        cursor: 'default'
+        userSelect: 'none'
     });
 });
