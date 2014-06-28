@@ -19,6 +19,7 @@ export interface Event {
  * An enum representing the two different axis
  */
 export enum DDTAxis { X, Y }
+
 /**
  * The result of a bounds calculation.
  */
@@ -495,9 +496,10 @@ export class DDTShadowTable extends DDTTable {
 }
 
 export interface DragAndDropTableOptions {
-    verticalOnly : boolean;
-    boundToTBody : boolean;
-    rowSelector  : string;
+    verticalOnly    : boolean;
+    boundToTBody    : boolean;
+    rowSelector     : string;
+    shadowContainer : Element;
 }
 
 export class DragAndDropTable {
@@ -506,9 +508,10 @@ export class DragAndDropTable {
     public options : DragAndDropTableOptions;
 
     public static defaultOptions = {
-        verticalOnly : true,
-        boundToTBody : true,
-        rowSelector  : '> tbody > tr'
+        verticalOnly    : true,
+        boundToTBody    : true,
+        rowSelector     : '> tbody > tr',
+        shadowContainer : document.body
     };
 
     private table      : DDTTable;
@@ -524,7 +527,7 @@ export class DragAndDropTable {
     private static $document = $(document);
 
     constructor(table : JQuery) {
-        this.options    = _.cloneDeep(DragAndDropTable.defaultOptions);
+        this.options    = _.clone(DragAndDropTable.defaultOptions);
         this.table      = new DDTTable(table);
         this.emitter    = new DDTEventEmitter();
         this.$rows      = this.getRows();
@@ -549,7 +552,7 @@ export class DragAndDropTable {
         var tbody       = this.table.element.children('tbody');
         var offBy       = this.calculateOffBy(rowElement[0], tbody);
 
-        shadow.element.appendTo('body');
+        shadow.element.appendTo(this.options.shadowContainer);
         shadow.emitter.on('ddt.position', coords => this.dragged(row, shadow, coords));
 
         shadow.attachToCursor(
@@ -636,7 +639,6 @@ export class DragAndDropTable {
     private hasChanged(values : any[] = this.calculateValues()) {
         return _.some(values, (val, i) => val !== this.lastValues[i]);
     }
-
 
     private emitValues(values : any[] = this.calculateValues()) {
         this.emitter.emit('ddt.order', [values]);
