@@ -554,7 +554,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             this.enabled = true;
             this.couldHaveChanged = false;
             this._options = { enabled: false };
-            this.options = _.cloneDeep(DragAndDropTable.defaultOptions);
+            this.options = _.clone(DragAndDropTable.defaultOptions);
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
             this.$rows = this.getRows();
@@ -580,7 +580,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var tbody = this.table.element.children('tbody');
             var offBy = this.calculateOffBy(rowElement[0], tbody);
 
-            shadow.element.appendTo('body');
+            shadow.element.appendTo(this.options.shadowContainer);
             shadow.emitter.on('ddt.position', function (coords) {
                 return _this.dragged(row, shadow, coords);
             });
@@ -737,7 +737,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DragAndDropTable.defaultOptions = {
             verticalOnly: true,
             boundToTBody: true,
-            rowSelector: '> tbody > tr'
+            rowSelector: '> tbody > tr',
+            shadowContainer: document.body
         };
 
         DragAndDropTable.window = new DDTElement($(window));

@@ -54,7 +54,7 @@
 </head>
 <body>
 <button data-bind="click: toggle">Toggle Enabled</button>
-<table class="table" data-bind="ddt: enabled, ddtEventOrder: order">
+<table class="table" data-bind="ddt: enabled, ddtEventOrder: order, ddtShadowContainer: document.getElementById('shadowContainer')">
     <colgroup>
         <col><col width=100><col>
     </colgroup>
@@ -98,6 +98,8 @@
         </tr>
     </tbody>
 </table>
+
+<div id="shadowContainer"></div>
 
 <!-- <button id="toggle">Toggle enbabled/display</button> -->
 <script>
