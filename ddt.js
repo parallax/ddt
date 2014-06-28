@@ -312,13 +312,14 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             return toNumber(element.css('border-left-width')) + toNumber(element.css('border-top-width'));
         };
 
-        DDTElement.getParentWithSelector = function (el, selector) {
+        DDTElement.getParentWithSelector = function (el, selector, topEl) {
+            if (typeof topEl === "undefined") { topEl = document.body; }
             var worker = function (jq) {
                 if (jq.is(selector)) {
                     return jq;
                 }
 
-                if (jq.is(document.body)) {
+                if (jq.is(topEl)) {
                     return null;
                 }
 
@@ -609,12 +610,16 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
-            this.table.element.on('mousedown', this.getEventSelector(), function (e) {
+            this.table.element.on('mousedown', function (e) {
                 if (!_this.enabled || e.which !== 1) {
                     return;
                 }
 
                 var $row = _this.getRowFromEvent(e);
+
+                if (!$row) {
+                    return;
+                }
 
                 if (_this.options.ignoreSelector && $row.is(_this.options.ignoreSelector)) {
                     return;
@@ -663,13 +668,17 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         };
 
         DragAndDropTable.prototype.getRowFromEvent = function (e) {
-            var $target = $(e.currentTarget);
+            var $target = $(e.target);
+            var selector = this.getEventSelector();
+            var node = this.table.getNode();
 
-            if (this.options.rowSelector) {
-                return $target;
+            var clicked = DDTElement.getParentWithSelector($target, selector, node);
+
+            if (!clicked || !this.options.handleSelector) {
+                return clicked;
             }
 
-            return DDTElement.getParentWithSelector($target, this.options.rowSelector);
+            return DDTElement.getParentWithSelector(clicked, this.options.rowSelector, node);
         };
 
         DragAndDropTable.prototype.getBindingElement = function () {
@@ -801,7 +810,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             containment: null,
             bindToTable: true,
             ignoreSelector: null,
-            rowSelector: '> tbody > tr',
+            rowSelector: 'tbody > tr',
             handleSelector: null,
             shadowContainer: document.body,
             cursor: 'default'
