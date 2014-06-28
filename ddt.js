@@ -551,14 +551,10 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
-            this.options = {
-                verticalOnly: true,
-                boundToTBody: true,
-                rowSelector: '> tbody > tr'
-            };
             this.enabled = true;
             this.couldHaveChanged = false;
             this._options = { enabled: false };
+            this.options = _.cloneDeep(DragAndDropTable.defaultOptions);
             this.table = new DDTTable(table);
             this.emitter = new DDTEventEmitter();
             this.$rows = this.getRows();
@@ -738,6 +734,12 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
                     break;
             }
         };
+        DragAndDropTable.defaultOptions = {
+            verticalOnly: true,
+            boundToTBody: true,
+            rowSelector: '> tbody > tr'
+        };
+
         DragAndDropTable.window = new DDTElement($(window));
         DragAndDropTable.$document = $(document);
         return DragAndDropTable;
