@@ -25,7 +25,7 @@ export enum DDTAxis { X, Y }
 /**
  * The result of a bounds calculation.
  */
-export enum DDTBoundsResult { LOW, IN, HIGH }
+export enum DDTBounds { LOW, IN, HIGH }
 
 /**
  * A mini event emitter
@@ -53,9 +53,9 @@ export class DDTEventEmitter {
 }
 
 /**
- * A class representing coords which we use across the whole library
+ * A class representing a point which we use across the whole library
  */
-export class DDTCoords {
+export class DDTPoint {
 
     x : number;
     y : number;
@@ -65,49 +65,49 @@ export class DDTCoords {
         this.y = y;
     }
 
-    minus(coords : DDTCoords) { return new DDTCoords(this.x - coords.x, this.y - coords.y); }
-    add(coords : DDTCoords)   { return new DDTCoords(this.x + coords.x, this.y + coords.y); }
+    minus(point : DDTPoint) { return new DDTPoint(this.x - point.x, this.y - point.y); }
+    add(point : DDTPoint)   { return new DDTPoint(this.x + point.x, this.y + point.y); }
 
 
-    gt(coords : DDTCoords, axis : DDTAxis) {
-        var key = DDTCoords.enumToAxis(axis);
+    gt(point : DDTPoint, axis : DDTAxis) {
+        var key = DDTPoint.enumToAxis(axis);
 
-        return this[key] > coords[key];
+        return this[key] > point[key];
     }
 
-    lt(coords : DDTCoords, axis : DDTAxis) {
-        var key = DDTCoords.enumToAxis(axis);
+    lt(point : DDTPoint, axis : DDTAxis) {
+        var key = DDTPoint.enumToAxis(axis);
 
-        return this[key] < coords[key];
+        return this[key] < point[key];
     }
 
     /**
      * Add a certain amount to a specific axis
      */
     addToAxis(size : number, axis : DDTAxis) {
-        var coords = [this.x, this.y];
+        var point = [this.x, this.y];
 
-        coords[axis === DDTAxis.X ? 0 : 1] += size;
+        point[axis === DDTAxis.X ? 0 : 1] += size;
 
-        return new DDTCoords(coords[0], coords[1]);
+        return new DDTPoint(point[0], point[1]);
     }
 
     /**
      * Calculation taken from jQuery UI sortable.
      *
-     * Used to calculate if a coords is over another coords by a certain amount
+     * Used to calculate if a point is over another point by a certain amount
      */
-    isOverAxis(coords : DDTCoords, size : number, axis : DDTAxis) {
-        return this.gt(coords, axis) && this.lt(coords.addToAxis(size, axis), axis);
+    isOverAxis(point : DDTPoint, size : number, axis : DDTAxis) {
+        return this.gt(point, axis) && this.lt(point.addToAxis(size, axis), axis);
     }
 
-    static fromEvent   = (event : JQueryEventObject) => new DDTCoords(event.pageX, event.pageY);
-    static fromElement = (element : Element)         => DDTCoords.fromJQuery($(element));
+    static fromEvent   = (event : JQueryEventObject) => new DDTPoint(event.pageX, event.pageY);
+    static fromElement = (element : Element)         => DDTPoint.fromJQuery($(element));
 
     static fromJQuery(jquery : JQuery) {
         var offset = jquery.offset();
 
-        return new DDTCoords(offset.left, offset.top);
+        return new DDTPoint(offset.left, offset.top);
     }
 
     private static enumToAxis = (axis : DDTAxis) => axis === DDTAxis.X ? 'x' : 'y';
@@ -227,7 +227,7 @@ export class DDTElement {
     /**
      * Calculate if an element is in the bounds of its parent
      */
-    calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTCoords = null) : DDTBoundsResult {
+    calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTPoint = null) : DDTBounds {
         // Just some calculations
         var ourOffset    = positions ? positions.y : this.offsetTop();
         var ourHeight    = this.element.outerHeight();
@@ -235,14 +235,14 @@ export class DDTElement {
         var parentHeight = parent.element.outerHeight();
 
         if (ourOffset < parentOffset) {
-            return DDTBoundsResult.LOW;
+            return DDTBounds.LOW;
         }
 
         if (ourOffset + ourHeight < parentOffset + parentHeight + diffY) {
-            return DDTBoundsResult.IN;
+            return DDTBounds.IN;
         }
 
-        return DDTBoundsResult.HIGH;
+        return DDTBounds.HIGH;
     }
 
     /**
@@ -371,7 +371,7 @@ export class DDTPositionableElement extends DDTElement {
     /**
      * @todo This is far too messy, clean it up
      */
-    attachToCursor(container : JQuery, diff : DDTCoords = null, axis : DDTAxis[] = null, bound : Element = null) {
+    attachToCursor(container : JQuery, diff : DDTPoint = null, axis : DDTAxis[] = null, bound : Element = null) {
 
         var bodyElement = new DDTElement($('body'));
         var boundElement : DDTElement;
@@ -383,7 +383,7 @@ export class DDTPositionableElement extends DDTElement {
         bodyElement.notSelectable();
 
         var updateFunction = (event : JQueryEventObject) => {
-            var position = DDTCoords.fromEvent(event);
+            var position = DDTPoint.fromEvent(event);
 
             if (diff) {
                 position = position.minus(diff);
@@ -391,16 +391,16 @@ export class DDTPositionableElement extends DDTElement {
 
             if (boundElement) {
                 var borders = DDTElement.getVerticalBorders(this.element.find('> tbody > tr > td').eq(0));
-                var bounds = this.calculateBounds(boundElement, borders, position);
+                var bounds  = this.calculateBounds(boundElement, borders, position);
 
-                if (bounds !== DDTBoundsResult.IN) {
+                if (bounds !== DDTBounds.IN) {
                     var newPos = boundElement.offsetTop();
 
-                    if (bounds === DDTBoundsResult.HIGH) {
+                    if (bounds === DDTBounds.HIGH) {
                         newPos += boundElement.element.height() - this.element.height() + borders;
                     }
 
-                    position = new DDTCoords(position.x, newPos);
+                    position = new DDTPoint(position.x, newPos);
                 }
             }
 
@@ -415,7 +415,7 @@ export class DDTPositionableElement extends DDTElement {
             });
     }
 
-    setPosition(coords : DDTCoords, axis : DDTAxis[] = null) {
+    setPosition(point : DDTPoint, axis : DDTAxis[] = null) {
 
         if (!axis) {
             axis = [DDTAxis.X, DDTAxis.Y]
@@ -424,18 +424,18 @@ export class DDTPositionableElement extends DDTElement {
         var obj : { top ?: number; left ?: number; } = {};
 
         if (axis.indexOf(DDTAxis.X) > -1) {
-            obj.left = coords.x;
+            obj.left = point.x;
         }
 
         if (axis.indexOf(DDTAxis.Y) > -1) {
-            obj.top = coords.y;
+            obj.top = point.y;
         }
 
         this.element.css(obj);
 
         var pos = this.element.offset();
 
-        this.emitter.emit('ddt.position', [new DDTCoords(pos.left, pos.top)]);
+        this.emitter.emit('ddt.position', [new DDTPoint(pos.left, pos.top)]);
     }
 }
 
@@ -586,21 +586,21 @@ export class DragAndDropTable {
                 return;
             }
 
-            this.dragRow($row, DDTCoords.fromEvent(e))
+            this.dragRow($row, DDTPoint.fromEvent(e))
         });
     }
 
-    dragRow(rowElement : JQuery, mousePosition : DDTCoords) {
+    dragRow(rowElement : JQuery, mousePosition : DDTPoint) {
         var row         = new DDTRow(rowElement);
         var shadow      = this.table.createShadow(row);
-        var rowPosition = DDTCoords.fromJQuery(rowElement);
+        var rowPosition = DDTPoint.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
         var tbody       = this.table.element.children('tbody');
         var offBy       = this.calculateOffBy(rowElement[0], tbody);
         var cssEl       = DDTCSS.defineSelector('body', { cursor : this.options.cursor }, true);
 
         shadow.element.appendTo(this.options.shadowContainer);
-        shadow.emitter.on('ddt.position', coords => this.dragged(row, shadow, coords));
+        shadow.emitter.on('ddt.position', point => this.dragged(row, shadow, point));
 
         shadow.attachToCursor(
             DragAndDropTable.$document,
@@ -657,7 +657,7 @@ export class DragAndDropTable {
         return null;
     }
 
-    private calculateOffBy(row : Element, tbody : JQuery) : DDTCoords {
+    private calculateOffBy(row : Element, tbody : JQuery) : DDTPoint {
         var styles = window.getComputedStyle(row);
         var minus  = [0, 0]; 
 
@@ -667,12 +667,12 @@ export class DragAndDropTable {
             minus[0] = (toNumber(tbody.css('border-right-width')) - toNumber(tbody.css('border-left-width'))) / 2;
         }
 
-        return new DDTCoords(minus[0], minus[1]);
+        return new DDTPoint(minus[0], minus[1]);
     }
 
-    private dragged(row : DDTRow, shadow : DDTShadowTable, coords : DDTCoords) {
+    private dragged(row : DDTRow, shadow : DDTShadowTable, point : DDTPoint) {
         this.handleScrolling(shadow);
-        this.handleRowSwapping(row, shadow, coords);
+        this.handleRowSwapping(row, shadow, point);
     }
 
     private endDrag(row : DDTRow, shadow : DDTShadowTable, cssEl : HTMLStyleElement) {
@@ -693,13 +693,13 @@ export class DragAndDropTable {
         }
     }
 
-    private handleRowSwapping(row : DDTRow, shadow : DDTShadowTable, coords : DDTCoords) {
+    private handleRowSwapping(row : DDTRow, shadow : DDTShadowTable, point : DDTPoint) {
         var rows               = this.$rows = this.getRows();
         var node               = row.getNode();
         var rowsWithoutOurNode = _.filter(rows, tr => tr !== node);
 
         var res = _.some(rowsWithoutOurNode, tr => {
-            var toSwapWith = this.calculateRowToSwapWith(tr, coords, shadow);
+            var toSwapWith = this.calculateRowToSwapWith(tr, point, shadow);
 
             if (toSwapWith && row.getNode() !== toSwapWith[0]) {
                 this.swap(row, new DDTElement(toSwapWith), shadow);
@@ -729,18 +729,18 @@ export class DragAndDropTable {
         shadow.fixBackgroundColor(row);
     }
 
-    private calculateRowToSwapWith(currentRow : Element, coords : DDTCoords, shadow : DDTShadowTable) {
-        var rowCoords   = DDTCoords.fromElement(currentRow);
+    private calculateRowToSwapWith(currentRow : Element, point : DDTPoint, shadow : DDTShadowTable) {
+        var rowCoords   = DDTPoint.fromElement(currentRow);
         var $tr         = $(currentRow);
         var limits      = shadow.calculateBounds(this.table);
 
         var toSwapWith : JQuery;
 
-        if (limits === DDTBoundsResult.LOW) {
+        if (limits === DDTBounds.LOW) {
             toSwapWith = $(this.$rows[0]);
-        } else if (limits === DDTBoundsResult.HIGH) {
+        } else if (limits === DDTBounds.HIGH) {
             toSwapWith = $(_.last(this.$rows));
-        } else if (coords.isOverAxis(rowCoords, $tr.height() / 2, DDTAxis.Y)) {
+        } else if (point.isOverAxis(rowCoords, $tr.height() / 2, DDTAxis.Y)) {
             toSwapWith = $tr;
         }
 
@@ -748,16 +748,16 @@ export class DragAndDropTable {
     }
 
     private handleScrolling(shadow : DDTShadowTable) {
-        if (shadow.calculateBounds(this.table, shadow.row.element.outerHeight()) !== DDTBoundsResult.IN) {
+        if (shadow.calculateBounds(this.table, shadow.row.element.outerHeight()) !== DDTBounds.IN) {
             return;
         }
 
         switch (shadow.calculateBounds(DragAndDropTable.window)) {
-            case DDTBoundsResult.HIGH:
+            case DDTBounds.HIGH:
                 document.body.scrollTop += 5;
             break;
 
-            case DDTBoundsResult.LOW:
+            case DDTBounds.LOW:
                 document.body.scrollTop -= 5;
             break;
         }
