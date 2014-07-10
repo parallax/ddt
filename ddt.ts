@@ -572,7 +572,7 @@ export class DragAndDropTable {
     wireEvents() {
         this.table.element.on('mousedown', e => {
 
-            if (!this.enabled || e.which !== 1) {
+            if (!this.isEnabled() || e.which !== 1) {
                 return;
             }
 

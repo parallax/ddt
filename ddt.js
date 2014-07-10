@@ -611,7 +611,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
             this.table.element.on('mousedown', function (e) {
-                if (!_this.enabled || e.which !== 1) {
+                if (!_this.isEnabled() || e.which !== 1) {
                     return;
                 }
 
