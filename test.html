@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="http://code.jquery.com/jquery-git2.js"></script>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.11/require.min.js"></script>
     <meta charset="utf-8">
 
@@ -108,9 +105,14 @@
 <!-- <button id="toggle">Toggle enbabled/display</button> -->
 <script>
 
-    define('jquery',   function() { return $;  });
-    define('lodash',   function() { return _;  });
-    define('knockout', function() { return ko; });
+    requirejs.config({
+        paths : {
+            'jquery'       : './bower_components/jquery/dist/jquery.min',
+            'lodash'       : './bower_components/lodash/dist/lodash.min',
+            'knockout'     : '//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min',
+            'eventEmitter' : './bower_components/eventEmitter/EventEmitter.min'
+        }
+    });
 
     require(['ddt', 'knockout', 'bindings/knockout'], function(ddt, ko) {
 

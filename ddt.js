@@ -1,12 +1,11 @@
-/// <reference path='./typings/jquery/jquery.d.ts' />
-/// <reference path='./typings/lodash/lodash.d.ts' />
+/// <reference path='./typings/tsd.d.ts' />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $, _) {
+define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(require, exports, $, _, EventEmitter) {
     // Simple parseInt wrapper
     var toNumber = function (n) {
         return parseInt(n, 10) || 0;
@@ -32,37 +31,6 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
         DDTBounds[DDTBounds["HIGH"] = 2] = "HIGH";
     })(exports.DDTBounds || (exports.DDTBounds = {}));
     var DDTBounds = exports.DDTBounds;
-
-    /**
-    * A mini event emitter
-    *
-    * @todo Look at changing this to one that has already been written?
-    */
-    var DDTEventEmitter = (function () {
-        function DDTEventEmitter() {
-            this.handlers = {};
-        }
-        DDTEventEmitter.prototype.on = function (event, handler) {
-            if (!this.handlers[event]) {
-                this.handlers[event] = [];
-            }
-
-            this.handlers[event].push(handler);
-        };
-
-        DDTEventEmitter.prototype.off = function (event, handler) {
-            this.handlers[event].splice(this.handlers[event].indexOf(handler), 1);
-        };
-
-        DDTEventEmitter.prototype.emit = function (event, args) {
-            var _this = this;
-            (this.handlers[event] || []).forEach(function (h) {
-                return h.apply(_this, args);
-            });
-        };
-        return DDTEventEmitter;
-    })();
-    exports.DDTEventEmitter = DDTEventEmitter;
 
     /**
     * A class representing a point which we use across the whole library
@@ -203,7 +171,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
     var DDTElement = (function () {
         function DDTElement(element) {
             this.element = element;
-            this.emitter = new DDTEventEmitter();
+            this.emitter = new EventEmitter();
         }
         /**
         * Get the HTMLElement from the jQuery object
@@ -474,7 +442,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
             var pos = this.element.offset();
 
-            this.emitter.emit('ddt.position', [new DDTPoint(pos.left, pos.top)]);
+            this.emitter.trigger('ddt.position', [new DDTPoint(pos.left, pos.top)]);
         };
         return DDTPositionableElement;
     })(DDTElement);
@@ -602,7 +570,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             };
             this.options = _.clone(DragAndDropTable.defaultOptions);
             this.table = new DDTTable(table);
-            this.emitter = new DDTEventEmitter();
+            this.emitter = new EventEmitter();
             this.$rows = this.getRows();
             this.lastValues = this.calculateValues();
 
@@ -697,8 +665,8 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
             var styles = window.getComputedStyle(row);
             var minus = [0, 0];
 
-            if (styles['border-collapse'] === 'separate') {
-                minus[1] = toNumber(styles['border-spacing'].split(' ')[1]);
+            if (styles.getPropertyValue('border-collapse') === 'separate') {
+                minus[1] = toNumber(styles.getPropertyValue('border-spacing').split(' ')[1]);
             } else {
                 minus[0] = (toNumber(tbody.css('border-right-width')) - toNumber(tbody.css('border-left-width'))) / 2;
             }
@@ -761,7 +729,7 @@ define(["require", "exports", 'jquery', 'lodash'], function(require, exports, $,
 
         DragAndDropTable.prototype.emitValues = function (values) {
             if (typeof values === "undefined") { values = this.calculateValues(); }
-            this.emitter.emit('ddt.order', [values]);
+            this.emitter.trigger('ddt.order', [values]);
 
             this.lastValues = values;
         };
