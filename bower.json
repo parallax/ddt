@@ -1,0 +1,24 @@
+{
+  "name": "ddt",
+  "main": "ddt.js",
+  "version": "0.5.0",
+  "homepage": "https://github.com/parallax/ddt",
+  "authors": [
+    "Nathaniel Higgins <nat@nath.is>"
+  ],
+  "description": "Table row drag and drop reordering",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "lodash": "~2.4.1",
+    "eventEmitter": "~4.2.7"
+  }
+}

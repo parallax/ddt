@@ -1,11 +1,11 @@
-/// <reference path='./typings/jquery/jquery.d.ts' />
-/// <reference path='./typings/lodash/lodash.d.ts' />
+/// <reference path='./typings/tsd.d.ts' />
 
-import $ = require('jquery');
-import _ = require('lodash');
+import $            = require('jquery');
+import _            = require('lodash');
+import EventEmitter = require('eventEmitter'); 
 
 // Simple parseInt wrapper
-var toNumber = n => parseInt(n, 10) || 0;
+var toNumber = (n : any) => parseInt(n, 10) || 0;
 
 /**
  * lib.d.ts doesn't include these properties on event for some reason.
@@ -28,34 +28,11 @@ export enum DDTAxis { X, Y }
 export enum DDTBounds { LOW, IN, HIGH }
 
 /**
- * A mini event emitter
- *
- * @todo Look at changing this to one that has already been written? 
- */
-export class DDTEventEmitter {
-    private handlers = {};
-
-    public on(event : string, handler : Function) {
-        if (!this.handlers[event]) {
-            this.handlers[event] = [];
-        }
-
-        this.handlers[event].push(handler);
-    }
-
-    public off(event : string, handler : Function) {
-        this.handlers[event].splice(this.handlers[event].indexOf(handler), 1);
-    }
-
-    public emit(event : string, args : any[]) {
-        (this.handlers[event] || []).forEach(h => h.apply(this, args));
-    }
-}
-
-/**
  * A class representing a point which we use across the whole library
  */
 export class DDTPoint {
+
+    [key : string] : any;
 
     x : number;
     y : number;
@@ -187,11 +164,11 @@ export class DDTElement {
     static noSelect    = 'DDTNoSelect';
 
     element : JQuery;
-    emitter : DDTEventEmitter;
+    emitter : EventEmitter;
 
     constructor(element : JQuery) {
         this.element = element;
-        this.emitter = new DDTEventEmitter();
+        this.emitter = new EventEmitter();
     }
 
     /**
@@ -345,10 +322,10 @@ export class DDTElement {
         var attrs = Array.prototype.slice.call(element.attributes);
 
         if (ignore) {
-            attrs = attrs.filter(attr => ignore.indexOf(attr.name) === -1);
+            attrs = attrs.filter((attr : Attr) => ignore.indexOf(attr.name) === -1);
         }
 
-        attrs.forEach(attr => clone.setAttribute(attr.name, attr.value));
+        attrs.forEach((attr : Attr) => clone.setAttribute(attr.name, attr.value));
     }
 
     static getInheritedBackgroundColor(el : JQuery) : string {
@@ -435,7 +412,7 @@ export class DDTPositionableElement extends DDTElement {
 
         var pos = this.element.offset();
 
-        this.emitter.emit('ddt.position', [new DDTPoint(pos.left, pos.top)]);
+        this.emitter.trigger('ddt.position', [new DDTPoint(pos.left, pos.top)]);
     }
 }
 
@@ -532,10 +509,10 @@ export interface DragAndDropTableOptions {
 
 export class DragAndDropTable {
 
-    public emitter : DDTEventEmitter;
+    public emitter : EventEmitter;
     public options : DragAndDropTableOptions;
 
-    public static defaultOptions = {
+    public static defaultOptions : DragAndDropTableOptions = {
         verticalOnly    : true,
         containment     : null,
         bindToTable     : true,
@@ -562,7 +539,7 @@ export class DragAndDropTable {
     constructor(table : JQuery) {
         this.options    = _.clone(DragAndDropTable.defaultOptions);
         this.table      = new DDTTable(table);
-        this.emitter    = new DDTEventEmitter();
+        this.emitter    = new EventEmitter();
         this.$rows      = this.getRows();
         this.lastValues = this.calculateValues();
 
@@ -600,7 +577,7 @@ export class DragAndDropTable {
         var cssEl       = DDTCSS.defineSelector('body', { cursor : this.options.cursor }, true);
 
         shadow.element.appendTo(this.options.shadowContainer);
-        shadow.emitter.on('ddt.position', point => this.dragged(row, shadow, point));
+        shadow.emitter.on('ddt.position', (point : DDTPoint) => this.dragged(row, shadow, point));
 
         shadow.attachToCursor(
             DragAndDropTable.$document,
@@ -661,8 +638,8 @@ export class DragAndDropTable {
         var styles = window.getComputedStyle(row);
         var minus  = [0, 0]; 
 
-        if (styles['border-collapse'] === 'separate') {
-            minus[1] = toNumber(styles['border-spacing'].split(' ')[1]);
+        if (styles.getPropertyValue('border-collapse') === 'separate') {
+            minus[1] = toNumber(styles.getPropertyValue('border-spacing').split(' ')[1]);
         } else {
             minus[0] = (toNumber(tbody.css('border-right-width')) - toNumber(tbody.css('border-left-width'))) / 2;
         }
@@ -718,7 +695,7 @@ export class DragAndDropTable {
     }
 
     private emitValues(values : any[] = this.calculateValues()) {
-        this.emitter.emit('ddt.order', [values]);
+        this.emitter.trigger('ddt.order', [values]);
         
         this.lastValues = values;
     }
