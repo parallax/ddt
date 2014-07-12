@@ -11,8 +11,6 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         return parseInt(n, 10) || 0;
     };
 
-    
-
     /**
     * An enum representing the two different axis
     */

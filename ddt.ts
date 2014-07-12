@@ -8,16 +8,6 @@ import EventEmitter = require('eventEmitter');
 var toNumber = (n : any) => parseInt(n, 10) || 0;
 
 /**
- * lib.d.ts doesn't include these properties on event for some reason.
- */
-export interface Event {
-    pageX : number;
-    pageY : number;
-
-    currentTarget : Element;
-}
-
-/**
  * An enum representing the two different axis
  */
 export enum DDTAxis { X, Y }
