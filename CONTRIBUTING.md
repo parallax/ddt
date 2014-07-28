@@ -1,0 +1,1 @@
+Please refer to the contributing section of the main README file.

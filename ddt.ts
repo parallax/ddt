@@ -743,6 +743,10 @@ export class DragAndDropTable {
     }
 }
 
+export function init(table : JQuery) : DragAndDropTable {
+    return new DragAndDropTable(table);
+}
+
 DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
 DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
 DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {

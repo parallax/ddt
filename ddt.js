@@ -799,6 +799,11 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     })();
     exports.DragAndDropTable = DragAndDropTable;
 
+    function init(table) {
+        return new DragAndDropTable(table);
+    }
+    exports.init = init;
+
     DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
     DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
     DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
