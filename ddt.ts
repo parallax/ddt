@@ -194,11 +194,10 @@ export class DDTElement {
     /**
      * Calculate if an element is in the bounds of its parent
      */
-    calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTPoint = null) : DDTBounds {
+    calculateBounds(parent : DDTElement, diffY : number = 0, positions : DDTPoint = null, parentOffset = parent.offsetTop()) : DDTBounds {
         // Just some calculations
         var ourOffset    = positions ? positions.y : this.offsetTop();
         var ourHeight    = this.element.outerHeight();
-        var parentOffset = parent.offsetTop();
         var parentHeight = parent.element.outerHeight();
 
         if (ourOffset < parentOffset) {
@@ -518,13 +517,17 @@ export class DragAndDropTable {
     private $rows      : JQuery;
     private lastValues : any[];
 
-    private enabled          = true;
     private couldHaveChanged = false;
 
     private _options         = { enabled : false };
 
     private static window    = new DDTElement($(window));
     private static $document = $(document);
+
+    private cache : {
+        tableOffset ?: number;
+        rowPoints ?: DDTPoint[];
+    } = {};
 
     constructor(table : JQuery) {
         this.options    = _.clone(DragAndDropTable.defaultOptions);
@@ -566,6 +569,9 @@ export class DragAndDropTable {
         var offBy       = this.calculateOffBy(rowElement[0], tbody);
         var cssEl       = DDTCSS.defineSelector('body', { cursor : this.options.cursor }, true);
 
+        this.cache.tableOffset = this.table.offsetTop();
+        this.cacheRowPoints();
+
         shadow.element.appendTo(this.options.shadowContainer);
         shadow.emitter.on('ddt.position', (point : DDTPoint) => this.dragged(row, shadow, point));
 
@@ -596,6 +602,10 @@ export class DragAndDropTable {
     private getRows          = () => this.table.element.find(this.options.rowSelector);
     private calculateValues  = () => _.map(this.$rows, row => $(row).attr(this.options.valueAttribute));
     private getEventSelector = () => this.options.handleSelector || this.options.rowSelector;
+
+    private cacheRowPoints() {
+        this.cache.rowPoints   = _.map(this.getRows(), tr => DDTPoint.fromElement(tr));
+    }
 
     private getRowFromEvent(e : JQueryEventObject) {
         var $target = $(e.target);
@@ -661,23 +671,23 @@ export class DragAndDropTable {
     }
 
     private handleRowSwapping(row : DDTRow, shadow : DDTShadowTable, point : DDTPoint) {
-        var rows               = this.$rows = this.getRows();
-        var node               = row.getNode();
-        var rowsWithoutOurNode = _.filter(rows, tr => tr !== node);
+        var rows = this.$rows = this.getRows();
+        var node = row.getNode();
 
-        var res = _.some(rowsWithoutOurNode, tr => {
-            var toSwapWith = this.calculateRowToSwapWith(tr, point, shadow);
+        _.each(rows, (tr, i) => {
+            if (tr === node) {
+                return;
+            }
+
+            var cachedPoint = this.cache.rowPoints[i];
+            var toSwapWith = this.calculateRowToSwapWith(tr, point, shadow, cachedPoint);
 
             if (toSwapWith && row.getNode() !== toSwapWith[0]) {
                 this.swap(row, new DDTElement(toSwapWith), shadow);
 
-                return true;
+                return false;
             }
         });
-
-        if (res) {
-            this.couldHaveChanged = true;
-        }
     }
 
     private hasChanged(values : any[] = this.calculateValues()) {
@@ -694,12 +704,14 @@ export class DragAndDropTable {
         row.swap(toSwapWith);
         DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
         shadow.fixBackgroundColor(row);
+
+        this.couldHaveChanged = true;
+        this.cacheRowPoints();
     }
 
-    private calculateRowToSwapWith(currentRow : Element, point : DDTPoint, shadow : DDTShadowTable) {
-        var rowCoords   = DDTPoint.fromElement(currentRow);
+    private calculateRowToSwapWith(currentRow : Element, point : DDTPoint, shadow : DDTShadowTable, rowCoords : DDTPoint = DDTPoint.fromElement(currentRow)) {
         var $tr         = $(currentRow);
-        var limits      = shadow.calculateBounds(this.table);
+        var limits      = shadow.calculateBounds(this.table, 0, null, this.cache.tableOffset);
 
         var toSwapWith : JQuery;
 

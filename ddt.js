@@ -216,13 +216,13 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         /**
         * Calculate if an element is in the bounds of its parent
         */
-        DDTElement.prototype.calculateBounds = function (parent, diffY, positions) {
+        DDTElement.prototype.calculateBounds = function (parent, diffY, positions, parentOffset) {
             if (typeof diffY === "undefined") { diffY = 0; }
             if (typeof positions === "undefined") { positions = null; }
+            if (typeof parentOffset === "undefined") { parentOffset = parent.offsetTop(); }
             // Just some calculations
             var ourOffset = positions ? positions.y : this.offsetTop();
             var ourHeight = this.element.outerHeight();
-            var parentOffset = parent.offsetTop();
             var parentHeight = parent.element.outerHeight();
 
             if (ourOffset < parentOffset) {
@@ -546,9 +546,9 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     var DragAndDropTable = (function () {
         function DragAndDropTable(table) {
             var _this = this;
-            this.enabled = true;
             this.couldHaveChanged = false;
             this._options = { enabled: false };
+            this.cache = {};
             this.isEnabled = function () {
                 return _this._options.enabled;
             };
@@ -605,6 +605,9 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             var offBy = this.calculateOffBy(rowElement[0], tbody);
             var cssEl = DDTCSS.defineSelector('body', { cursor: this.options.cursor }, true);
 
+            this.cache.tableOffset = this.table.offsetTop();
+            this.cacheRowPoints();
+
             shadow.element.appendTo(this.options.shadowContainer);
             shadow.emitter.on('ddt.position', function (point) {
                 return _this.dragged(row, shadow, point);
@@ -631,6 +634,12 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         };
         DragAndDropTable.prototype.toggleEnabled = function () {
             this._options.enabled ? this.disable() : this.enable();
+        };
+
+        DragAndDropTable.prototype.cacheRowPoints = function () {
+            this.cache.rowPoints = _.map(this.getRows(), function (tr) {
+                return DDTPoint.fromElement(tr);
+            });
         };
 
         DragAndDropTable.prototype.getRowFromEvent = function (e) {
@@ -698,23 +707,21 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             var _this = this;
             var rows = this.$rows = this.getRows();
             var node = row.getNode();
-            var rowsWithoutOurNode = _.filter(rows, function (tr) {
-                return tr !== node;
-            });
 
-            var res = _.some(rowsWithoutOurNode, function (tr) {
-                var toSwapWith = _this.calculateRowToSwapWith(tr, point, shadow);
+            _.each(rows, function (tr, i) {
+                if (tr === node) {
+                    return;
+                }
+
+                var cachedPoint = _this.cache.rowPoints[i];
+                var toSwapWith = _this.calculateRowToSwapWith(tr, point, shadow, cachedPoint);
 
                 if (toSwapWith && row.getNode() !== toSwapWith[0]) {
                     _this.swap(row, new DDTElement(toSwapWith), shadow);
 
-                    return true;
+                    return false;
                 }
             });
-
-            if (res) {
-                this.couldHaveChanged = true;
-            }
         };
 
         DragAndDropTable.prototype.hasChanged = function (values) {
@@ -736,12 +743,15 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             row.swap(toSwapWith);
             DDTElement.cloneUniqueStyles(row.element[0], shadow.row.element[0], ['visibility']);
             shadow.fixBackgroundColor(row);
+
+            this.couldHaveChanged = true;
+            this.cacheRowPoints();
         };
 
-        DragAndDropTable.prototype.calculateRowToSwapWith = function (currentRow, point, shadow) {
-            var rowCoords = DDTPoint.fromElement(currentRow);
+        DragAndDropTable.prototype.calculateRowToSwapWith = function (currentRow, point, shadow, rowCoords) {
+            if (typeof rowCoords === "undefined") { rowCoords = DDTPoint.fromElement(currentRow); }
             var $tr = $(currentRow);
-            var limits = shadow.calculateBounds(this.table);
+            var limits = shadow.calculateBounds(this.table, 0, null, this.cache.tableOffset);
 
             var toSwapWith;
 
