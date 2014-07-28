@@ -11,7 +11,9 @@ DDT (Drag and Drop Tables) is a library that adds drag and drop reordering suppo
 
 ## Install
 
-bower install ddt --save
+```
+$ bower install ddt --save
+```
 
 ## Requirements
 
