@@ -485,15 +485,12 @@ export class DDTShadowTable extends DDTTable {
 }
 
 export interface DragAndDropTableOptions {
-    verticalOnly    : boolean;
-    bindToTable     : boolean;
-    rowSelector     : string;
-    handleSelector  : string;
-    ignoreSelector  : string;
-    cursor          : string;
-    valueAttribute  : string;
-    shadowContainer : Element;
-    containment     : Element;
+    verticalOnly    ?: boolean;
+    bindToTable     ?: boolean;
+    cursor          ?: string;
+    valueAttribute  ?: string;
+    shadowContainer ?: Element;
+    containment     ?: Element;
 }
 
 export class DragAndDropTable {
@@ -505,9 +502,6 @@ export class DragAndDropTable {
         verticalOnly    : true,
         containment     : null,
         bindToTable     : true,
-        ignoreSelector  : null,
-        rowSelector     : 'tbody > tr',
-        handleSelector  : null,
         shadowContainer : document.body,
         cursor          : 'default',
         valueAttribute  : 'data-value'
@@ -524,38 +518,35 @@ export class DragAndDropTable {
     private static window    = new DDTElement($(window));
     private static $document = $(document);
 
+    private rowSelector = '> tbody > tr';
+
     private cache : {
         tableOffset ?: number;
         rowPoints ?: DDTPoint[];
     } = {};
 
-    constructor(table : JQuery) {
+    constructor(table : JQuery, options : DragAndDropTableOptions = {}) {
         this.options    = _.clone(DragAndDropTable.defaultOptions);
         this.table      = new DDTTable(table);
         this.emitter    = new EventEmitter();
         this.$rows      = this.getRows();
         this.lastValues = this.calculateValues();
 
+        _.extend(this.options, options);
+
         this.wireEvents();
     }
 
     wireEvents() {
-        this.table.element.on('mousedown', e => {
+        this.table.element.on('mousedown', this.rowSelector, e => {
 
             if (!this.isEnabled() || e.which !== 1) {
                 return;
             }
 
-            var $row = this.getRowFromEvent(e);
+            e.stopImmediatePropagation();
 
-            if (!$row) {
-                return;
-            }
-
-            if (this.options.ignoreSelector && $row.is(this.options.ignoreSelector)) {
-                return;
-            }
-
+            var $row = $(e.currentTarget);
             this.dragRow($row, DDTPoint.fromEvent(e))
         });
     }
@@ -599,26 +590,11 @@ export class DragAndDropTable {
     isEnabled = () => this._options.enabled;
 
     private getMovingAxis    = () => this.options.verticalOnly ? [DDTAxis.Y] : [DDTAxis.X, DDTAxis.Y];
-    private getRows          = () => this.table.element.find(this.options.rowSelector);
+    private getRows          = () => this.table.element.find(this.rowSelector);
     private calculateValues  = () => _.map(this.$rows, row => $(row).attr(this.options.valueAttribute));
-    private getEventSelector = () => this.options.handleSelector || this.options.rowSelector;
 
     private cacheRowPoints() {
         this.cache.rowPoints   = _.map(this.getRows(), tr => DDTPoint.fromElement(tr));
-    }
-
-    private getRowFromEvent(e : JQueryEventObject) {
-        var $target = $(e.target);
-        var selector = this.getEventSelector();
-        var node = this.table.getNode();
-
-        var clicked = DDTElement.getParentWithSelector($target, selector, node);
-
-        if (!clicked || !this.options.handleSelector) {
-            return clicked;
-        }
-
-        return DDTElement.getParentWithSelector(clicked, this.options.rowSelector, node);
     }
 
     private getBindingElement() {
