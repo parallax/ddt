@@ -295,10 +295,6 @@ export class DDTElement {
         return _.object(pairs);
     }
 
-    static cloneStyles(element : Element, clone : Element) {
-        clone.setAttribute('style', window.getComputedStyle(element).cssText);
-    }
-
     static cloneUniqueStyles(element : Element, clone : Element, ignore : string[] = []) {
         clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
     }
@@ -531,7 +527,7 @@ export class DragAndDropTable extends EventEmitter {
         _.extend(this.options, options);
 
         this.wireEvents();
-        this.createSelectors();
+        DragAndDropTable.createSelectors();
     }
 
     wireEvents() {
@@ -554,7 +550,7 @@ export class DragAndDropTable extends EventEmitter {
         var rowPosition = DDTPoint.fromJQuery(rowElement);
         var diff        = mousePosition.minus(rowPosition);
         var tbody       = this.table.element.children('tbody');
-        var offBy       = this.calculateOffBy(rowElement[0], tbody);
+        var offBy       = DragAndDropTable.calculateOffBy(rowElement[0], tbody);
         var cssEl       = DDTCSS.defineSelector('body', { cursor : this.options.cursor }, true);
 
         this.cache.tableOffset = this.table.offsetTop();
@@ -582,7 +578,6 @@ export class DragAndDropTable extends EventEmitter {
 
     disable()       { this._options.enabled = false; }
     enable()        { this._options.enabled = true; }
-    toggleEnabled() { this._options.enabled ? this.disable() : this.enable(); }
 
     isEnabled = () => this._options.enabled;
 
@@ -607,7 +602,7 @@ export class DragAndDropTable extends EventEmitter {
         return null;
     }
 
-    private calculateOffBy(row : Element, tbody : JQuery) : DDTPoint {
+    private static calculateOffBy(row : Element, tbody : JQuery) : DDTPoint {
         var styles = window.getComputedStyle(row);
         var minus  = [0, 0]; 
 
@@ -715,10 +710,12 @@ export class DragAndDropTable extends EventEmitter {
         }
     }
 
-    private createSelectors() {
+    private static createSelectors() {
         if (DragAndDropTable.hasCreatedSelectors) {
             return;
         }
+
+        DragAndDropTable.hasCreatedSelectors = true;
 
         DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
         DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });

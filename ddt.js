@@ -309,10 +309,6 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             return _.object(pairs);
         };
 
-        DDTElement.cloneStyles = function (element, clone) {
-            clone.setAttribute('style', window.getComputedStyle(element).cssText);
-        };
-
         DDTElement.cloneUniqueStyles = function (element, clone, ignore) {
             if (typeof ignore === "undefined") { ignore = []; }
             clone.setAttribute('style', DDTCSS.rulesToCSS(DDTElement.getUniqueStyles(element, ignore)));
@@ -561,7 +557,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             _.extend(this.options, options);
 
             this.wireEvents();
-            this.createSelectors();
+            DragAndDropTable.createSelectors();
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
@@ -584,7 +580,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             var rowPosition = DDTPoint.fromJQuery(rowElement);
             var diff = mousePosition.minus(rowPosition);
             var tbody = this.table.element.children('tbody');
-            var offBy = this.calculateOffBy(rowElement[0], tbody);
+            var offBy = DragAndDropTable.calculateOffBy(rowElement[0], tbody);
             var cssEl = DDTCSS.defineSelector('body', { cursor: this.options.cursor }, true);
 
             this.cache.tableOffset = this.table.offsetTop();
@@ -614,9 +610,6 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         DragAndDropTable.prototype.enable = function () {
             this._options.enabled = true;
         };
-        DragAndDropTable.prototype.toggleEnabled = function () {
-            this._options.enabled ? this.disable() : this.enable();
-        };
 
         DragAndDropTable.prototype.cacheRowPoints = function () {
             this.cache.rowPoints = _.map(this.getRows(), function (tr) {
@@ -636,7 +629,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             return null;
         };
 
-        DragAndDropTable.prototype.calculateOffBy = function (row, tbody) {
+        DragAndDropTable.calculateOffBy = function (row, tbody) {
             var styles = window.getComputedStyle(row);
             var minus = [0, 0];
 
@@ -750,10 +743,12 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             }
         };
 
-        DragAndDropTable.prototype.createSelectors = function () {
+        DragAndDropTable.createSelectors = function () {
             if (DragAndDropTable.hasCreatedSelectors) {
                 return;
             }
+
+            DragAndDropTable.hasCreatedSelectors = true;
 
             DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
             DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
