@@ -12,13 +12,15 @@
     "url": "git://github.com/parallax/ddt.git"
   },
   "author": "",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/parallax/ddt/issues"
   },
   "dependencies": {},
   "devDependencies": {
     "gulp": "~3.8.6",
-    "gulp-typescript-compiler": "~1.0.1"
+    "gulp-typescript-compiler": "~1.0.1",
+    "chai": "~1.9.1",
+    "karma": "~0.12.19",
+    "karma-chai": "~0.1.0"
   }
 }

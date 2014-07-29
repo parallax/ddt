@@ -78,9 +78,9 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         };
 
         DDTPoint.fromJQuery = function (jquery) {
-            var offset = jquery.offset();
+            var offset = jquery.offset() || { top: 0, left: 0 };
 
-            return new DDTPoint(offset.left, offset.top);
+            return new DDTPoint(offset.left || 0, offset.top || 0);
         };
         DDTPoint.fromEvent = function (event) {
             return new DDTPoint(event.pageX, event.pageY);

@@ -72,9 +72,9 @@ export class DDTPoint {
     static fromElement = (element : Element)         => DDTPoint.fromJQuery($(element));
 
     static fromJQuery(jquery : JQuery) {
-        var offset = jquery.offset();
+        var offset = jquery.offset() || { top : 0, left : 0 };
 
-        return new DDTPoint(offset.left, offset.top);
+        return new DDTPoint(offset.left || 0, offset.top || 0 );
     }
 
     private static enumToAxis = (axis : DDTAxis) => axis === DDTAxis.X ? 'x' : 'y';

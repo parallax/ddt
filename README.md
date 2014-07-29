@@ -28,9 +28,19 @@ Although DDT may work with other versions of these libaries, this use is unteste
 
 ```js
 require(['ddt'], function(ddt) {
-	ddt.init($(yourElementHere)); 
+	var table = ddt.init($(yourElementHere)); 
+	
+	// This is likely to change
+	table.emitter('ddt.')
 });
 ```
+
+And then just add `data-value` attributes to each of your `<tr>` tags in your HTML like so.
+
+```html
+<table>
+	<tr data-value="1">
+		<
 
 ## Bindings
 
