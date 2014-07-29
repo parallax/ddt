@@ -710,7 +710,7 @@ export class DragAndDropTable extends EventEmitter {
         }
     }
 
-    private static createSelectors() {
+    static createSelectors() {
         if (DragAndDropTable.hasCreatedSelectors) {
             return;
         }
