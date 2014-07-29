@@ -9,7 +9,6 @@ describe('DDTCSS', function() {
     var expect   = chai.expect;
     var DDTCSS   = ddt.DDTCSS;
 
-
     after(DDTCSS.cleanup);
     before(DDTCSS.cleanup);
     afterEach(DDTCSS.cleanup);
