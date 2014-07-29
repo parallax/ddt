@@ -2,7 +2,7 @@
 
 import $            = require('jquery');
 import _            = require('lodash');
-import EventEmitter = require('eventEmitter'); 
+import EventEmitter = require('eventEmitter');
 
 // Simple parseInt wrapper
 var toNumber = (n : any) => parseInt(n, 10) || 0;
@@ -16,6 +16,14 @@ export enum DDTAxis { X, Y }
  * The result of a bounds calculation.
  */
 export enum DDTBounds { LOW, IN, HIGH }
+
+/**
+ * Interface for an object containing pageX and pageY events
+ */
+export interface DDTMouseEvent {
+    pageX : number;
+    pageY : number;
+}
 
 /**
  * A class representing a point which we use across the whole library
@@ -68,7 +76,7 @@ export class DDTPoint {
         return this.gt(point, axis) && this.lt(point.addToAxis(size, axis), axis);
     }
 
-    static fromEvent   = (event : JQueryEventObject) => new DDTPoint(event.pageX, event.pageY);
+    static fromEvent   = (event   : DDTMouseEvent)   => new DDTPoint(event.pageX, event.pageY);
     static fromElement = (element : Element)         => DDTPoint.fromJQuery($(element));
 
     static fromJQuery(jquery : JQuery) {
@@ -77,7 +85,7 @@ export class DDTPoint {
         return new DDTPoint(offset.left || 0, offset.top || 0 );
     }
 
-    private static enumToAxis = (axis : DDTAxis) => axis === DDTAxis.X ? 'x' : 'y';
+    static enumToAxis = (axis : DDTAxis) => axis === DDTAxis.X ? 'x' : 'y';
 }
 
 /**

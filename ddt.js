@@ -30,6 +30,8 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     })(exports.DDTBounds || (exports.DDTBounds = {}));
     var DDTBounds = exports.DDTBounds;
 
+    
+
     /**
     * A class representing a point which we use across the whole library
     */

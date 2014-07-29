@@ -10,6 +10,12 @@
     },
     "lodash/lodash.d.ts": {
       "commit": "854957830abcd1d5a857c3ff2313108196943881"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "5a615a2c547eb9c5dc9081f187ccbcf339d282e1"
+    },
+    "chai/chai.d.ts": {
+      "commit": "5a615a2c547eb9c5dc9081f187ccbcf339d282e1"
     }
   }
 }

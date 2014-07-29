@@ -4,6 +4,4 @@
 interface Event {
     pageX : number;
     pageY : number;
-
-    currentTarget : Element;
 }
