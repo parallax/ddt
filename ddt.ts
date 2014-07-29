@@ -216,9 +216,9 @@ export class DDTElement {
      */
     clone(ignoreElements : Element[] = [], copyStyles : boolean = false) : DDTElement {
 
-        var cloneFn = (el : JQuery) => {
-            var clone     = $(document.createElement(el[0].tagName));
-            var children  = el.children();
+        var cloneFn = (el:JQuery) => {
+            var clone = $(document.createElement(el[0].tagName));
+            var children = el.children();
 
             if (copyStyles) {
                 DDTElement.cloneAttributes(el[0], clone[0], ['class', 'id']);
@@ -236,7 +236,7 @@ export class DDTElement {
                     // If we've not been told to ignore this element, clone it and append it to the parent
                     if (ignoreElements.indexOf(cEl) === -1) {
                         clone.append(cloneFn($(cEl)));
-                    }                    
+                    }
                 });
             }
 
@@ -244,31 +244,6 @@ export class DDTElement {
         };
 
         return new DDTElement(cloneFn(this.element));
-    }
-
-
-    /**
-     * Get the amount of padding and border an element has on its left side
-     */
-    static getLeftPaddingAndBorder(element : JQuery) : number {
-        return toNumber(element.css('border-left-width')) +
-               toNumber(element.css('border-top-width'));
-    }
-
-    static getParentWithSelector(el : JQuery, selector : string, topEl = document.body) : JQuery {
-        var worker = (jq : JQuery) => {
-            if (jq.is(selector)) {
-                return jq;
-            }
-
-            if (jq.is(topEl)) {
-                return null;
-            }
-
-            return worker(jq.parent());
-        };
-
-        return worker(el);
     }
 
     static getUniqueStyles(element : Element, ignore : string[] = []) : Object {

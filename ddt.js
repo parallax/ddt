@@ -271,30 +271,6 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             return new DDTElement(cloneFn(this.element));
         };
 
-        /**
-        * Get the amount of padding and border an element has on its left side
-        */
-        DDTElement.getLeftPaddingAndBorder = function (element) {
-            return toNumber(element.css('border-left-width')) + toNumber(element.css('border-top-width'));
-        };
-
-        DDTElement.getParentWithSelector = function (el, selector, topEl) {
-            if (typeof topEl === "undefined") { topEl = document.body; }
-            var worker = function (jq) {
-                if (jq.is(selector)) {
-                    return jq;
-                }
-
-                if (jq.is(topEl)) {
-                    return null;
-                }
-
-                return worker(jq.parent());
-            };
-
-            return worker(el);
-        };
-
         DDTElement.getUniqueStyles = function (element, ignore) {
             if (typeof ignore === "undefined") { ignore = []; }
             var ourStyles = window.getComputedStyle(element);
