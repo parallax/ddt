@@ -2,11 +2,11 @@
 * Created by nathaniel on 29/07/2014.
 */
 define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt, chai) {
-    var expect = chai.expect;
-    var DDTPoint = ddt.DDTPoint;
-    var DDTAxis = ddt.DDTAxis;
-
     describe('DDTPoint', function () {
+        var expect = chai.expect;
+        var DDTPoint = ddt.DDTPoint;
+        var DDTAxis = ddt.DDTAxis;
+
         it('should store values on properties', function () {
             var point = new DDTPoint(5, 10);
 
@@ -37,16 +37,16 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 var point1 = new DDTPoint(5, 10);
                 var point2 = new DDTPoint(10, 5);
 
-                expect(point1.lt(point2, DDTAxis.X)).to.equal(true);
-                expect(point2.lt(point1, DDTAxis.X)).to.equal(false);
+                expect(point1.lt(point2, 0 /* X */)).to.equal(true);
+                expect(point2.lt(point1, 0 /* X */)).to.equal(false);
             });
 
             it('should work on the vertical axis', function () {
                 var point1 = new DDTPoint(5, 10);
                 var point2 = new DDTPoint(10, 5);
 
-                expect(point1.lt(point2, DDTAxis.Y)).to.equal(false);
-                expect(point2.lt(point1, DDTAxis.Y)).to.equal(true);
+                expect(point1.lt(point2, 1 /* Y */)).to.equal(false);
+                expect(point2.lt(point1, 1 /* Y */)).to.equal(true);
             });
         });
 
@@ -55,24 +55,24 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 var point1 = new DDTPoint(5, 10);
                 var point2 = new DDTPoint(10, 5);
 
-                expect(point1.gt(point2, DDTAxis.X)).to.equal(false);
-                expect(point2.gt(point1, DDTAxis.X)).to.equal(true);
+                expect(point1.gt(point2, 0 /* X */)).to.equal(false);
+                expect(point2.gt(point1, 0 /* X */)).to.equal(true);
             });
 
             it('should work on the vertical axis', function () {
                 var point1 = new DDTPoint(5, 10);
                 var point2 = new DDTPoint(10, 5);
 
-                expect(point1.gt(point2, DDTAxis.Y)).to.equal(true);
-                expect(point2.gt(point1, DDTAxis.Y)).to.equal(false);
+                expect(point1.gt(point2, 1 /* Y */)).to.equal(true);
+                expect(point2.gt(point1, 1 /* Y */)).to.equal(false);
             });
         });
 
         describe('#addToAxis', function () {
             it('should only add to a specific axis', function () {
                 var point1 = new DDTPoint(5, 10);
-                var point2 = point1.addToAxis(10, DDTAxis.X);
-                var point3 = point2.addToAxis(4, DDTAxis.Y);
+                var point2 = point1.addToAxis(10, 0 /* X */);
+                var point3 = point2.addToAxis(4, 1 /* Y */);
 
                 expect(point3).to.have.property('x').and.to.equal(15);
                 expect(point3).to.have.property('y').and.to.equal(14);
@@ -84,8 +84,8 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 var point = new DDTPoint(10, 10);
                 var point2 = new DDTPoint(10, 15);
 
-                expect(point2.isOverAxis(point, 6, DDTAxis.Y)).to.equal(true);
-                expect(point2.isOverAxis(point, 4, DDTAxis.Y)).to.equal(false);
+                expect(point2.isOverAxis(point, 6, 1 /* Y */)).to.equal(true);
+                expect(point2.isOverAxis(point, 4, 1 /* Y */)).to.equal(false);
             });
         });
 
@@ -111,13 +111,6 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 expect(point).to.have.property('x').and.to.equal(15);
                 expect(point).to.have.property('y').and.to.equal(5);
             });
-
-            it('should return 0, 0 for the body', function () {
-                var point = DDTPoint.fromElement(document.body);
-
-                expect(point).to.have.property('x').and.to.equal(0);
-                expect(point).to.have.property('y').and.to.equal(0);
-            });
         });
 
         describe('#fromJQuery()', function () {
@@ -133,19 +126,12 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 expect(point).to.have.property('x').and.to.equal(15);
                 expect(point).to.have.property('y').and.to.equal(5);
             });
-
-            it('should return 0, 0 for the window', function () {
-                var point = DDTPoint.fromJQuery($(window));
-
-                expect(point).to.have.property('x').and.to.equal(0);
-                expect(point).to.have.property('y').and.to.equal(0);
-            });
         });
 
         describe('#enumToAxis', function () {
             it('should return the correct axis from the enum', function () {
-                expect(DDTPoint.enumToAxis(DDTAxis.X)).to.equal('x');
-                expect(DDTPoint.enumToAxis(DDTAxis.Y)).to.equal('y');
+                expect(DDTPoint.enumToAxis(0 /* X */)).to.equal('x');
+                expect(DDTPoint.enumToAxis(1 /* Y */)).to.equal('y');
             });
         });
     });

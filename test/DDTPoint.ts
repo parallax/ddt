@@ -7,11 +7,11 @@
 import ddt  = require('../ddt');
 import chai = require('chai');
 
-var expect   = chai.expect;
-var DDTPoint = ddt.DDTPoint;
-var DDTAxis  = ddt.DDTAxis;
-
 describe('DDTPoint', function() {
+    var expect   = chai.expect;
+    var DDTPoint = ddt.DDTPoint;
+    var DDTAxis  = ddt.DDTAxis;
+
     it('should store values on properties', function() {
         var point = new DDTPoint(5, 10);
 
@@ -116,13 +116,6 @@ describe('DDTPoint', function() {
             expect(point).to.have.property('x').and.to.equal(15);
             expect(point).to.have.property('y').and.to.equal(5);
         });
-
-        it('should return 0, 0 for the body', function() {
-            var point = DDTPoint.fromElement(document.body);
-
-            expect(point).to.have.property('x').and.to.equal(0);
-            expect(point).to.have.property('y').and.to.equal(0);
-        });
     });
 
     describe('#fromJQuery()', function() {
@@ -137,13 +130,6 @@ describe('DDTPoint', function() {
 
             expect(point).to.have.property('x').and.to.equal(15);
             expect(point).to.have.property('y').and.to.equal(5);
-        });
-
-        it('should return 0, 0 for the window', function() {
-            var point = DDTPoint.fromJQuery($(window));
-
-            expect(point).to.have.property('x').and.to.equal(0);
-            expect(point).to.have.property('y').and.to.equal(0);
         });
     });
 

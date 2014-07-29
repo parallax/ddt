@@ -159,6 +159,14 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         DDTCSS.arrowCase = function (name) {
             return name.replace(/([A-Z])/g, '-$1').toLowerCase();
         };
+
+        DDTCSS.cleanup = function () {
+            if (DDTCSS.styleElement) {
+                DDTCSS.styleElement.parentNode.removeChild(DDTCSS.styleElement);
+            }
+
+            DDTCSS.styleElement = undefined;
+        };
         return DDTCSS;
     })();
     exports.DDTCSS = DDTCSS;
@@ -553,6 +561,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             _.extend(this.options, options);
 
             this.wireEvents();
+            this.createSelectors();
         }
         DragAndDropTable.prototype.wireEvents = function () {
             var _this = this;
@@ -740,6 +749,21 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
                     break;
             }
         };
+
+        DragAndDropTable.prototype.createSelectors = function () {
+            if (DragAndDropTable.hasCreatedSelectors) {
+                return;
+            }
+
+            DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
+            DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
+            DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
+                WebkitUserSelect: 'none',
+                MsUserSelect: 'none',
+                OUserSelect: 'none',
+                userSelect: 'none'
+            });
+        };
         DragAndDropTable.defaultOptions = {
             verticalOnly: true,
             containment: null,
@@ -748,6 +772,8 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             cursor: 'default',
             valueAttribute: 'data-value'
         };
+
+        DragAndDropTable.hasCreatedSelectors = false;
 
         DragAndDropTable.window = new DDTElement($(window));
         DragAndDropTable.$document = $(document);
@@ -759,13 +785,4 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         return new DragAndDropTable(table);
     }
     exports.init = init;
-
-    DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden' });
-    DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
-    DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
-        WebkitUserSelect: 'none',
-        MsUserSelect: 'none',
-        OUserSelect: 'none',
-        userSelect: 'none'
-    });
 });

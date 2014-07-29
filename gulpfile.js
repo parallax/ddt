@@ -19,7 +19,7 @@ gulp.task('tsc-src', function() {
 
 gulp.task('tsc-test', function() {
 
-    return gulp.src(['./test/**/*.spec.ts'])
+    return gulp.src(['./test/**/*.ts'])
         .pipe(tsc(tscOptions))
         .pipe(gulp.dest('./test'));
 });

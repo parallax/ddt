@@ -98,7 +98,7 @@ export class DDTPoint {
  */
 export class DDTCSS {
 
-    private static styleElement : HTMLStyleElement;
+    static styleElement : HTMLStyleElement;
 
     /**
      * Define a specific selector with some rules for it
@@ -147,6 +147,19 @@ export class DDTCSS {
      * Convert CamelCase to -camel-case
      */
     static arrowCase(name : string) { return name.replace(/([A-Z])/g, '-$1').toLowerCase(); }
+
+    /**
+     * Remove our node
+     *
+     * @todo Add support for when extra elements are created
+     */
+    static cleanup = () => {
+        if (DDTCSS.styleElement) {
+            DDTCSS.styleElement.parentNode.removeChild(DDTCSS.styleElement);
+        }
+
+        DDTCSS.styleElement = undefined;
+    }
 }
 
 /**
@@ -488,6 +501,8 @@ export class DragAndDropTable extends EventEmitter {
         valueAttribute  : 'data-value'
     };
 
+    public static hasCreatedSelectors = false;
+
     private table      : DDTTable;
     private $rows      : JQuery;
     private lastValues : any[];
@@ -516,6 +531,7 @@ export class DragAndDropTable extends EventEmitter {
         _.extend(this.options, options);
 
         this.wireEvents();
+        this.createSelectors();
     }
 
     wireEvents() {
@@ -698,17 +714,23 @@ export class DragAndDropTable extends EventEmitter {
             break;
         }
     }
+
+    private createSelectors() {
+        if (DragAndDropTable.hasCreatedSelectors) {
+            return;
+        }
+
+        DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
+        DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
+        DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
+            WebkitUserSelect : 'none',
+            MsUserSelect     : 'none',
+            OUserSelect      : 'none',
+            userSelect       : 'none'
+        });
+    }
 }
 
 export function init(table : JQuery) : DragAndDropTable {
     return new DragAndDropTable(table);
 }
-
-DDTCSS.defineClass(DDTElement.notVisible, { visibility: 'hidden'});
-DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
-DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
-    WebkitUserSelect : 'none',
-    MsUserSelect     : 'none',
-    OUserSelect      : 'none',
-    userSelect       : 'none'
-});
