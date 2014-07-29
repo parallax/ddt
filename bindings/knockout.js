@@ -57,7 +57,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
         };
     });
 
-    ['order'].forEach(function(eventName) {
+    ['reorder'].forEach(function(eventName) {
         var key = 'ddtEvent' + capitalise(eventName);
 
         ko.bindingHandlers[key] = {
@@ -69,7 +69,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
                     throw new DDTErrorNoDDTBinding();
                 }
 
-                table.emitter.on('ddt.' + eventName, value);
+                table.emitter.on(eventName, value);
             }
         }
     });

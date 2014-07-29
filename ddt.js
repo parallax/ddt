@@ -440,7 +440,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
 
             var pos = this.element.offset();
 
-            this.emitter.trigger('ddt.position', [new DDTPoint(pos.left, pos.top)]);
+            this.emitter.trigger('position', [new DDTPoint(pos.left, pos.top)]);
         };
         return DDTPositionableElement;
     })(DDTElement);
@@ -543,10 +543,12 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     })(DDTTable);
     exports.DDTShadowTable = DDTShadowTable;
 
-    var DragAndDropTable = (function () {
+    var DragAndDropTable = (function (_super) {
+        __extends(DragAndDropTable, _super);
         function DragAndDropTable(table, options) {
             if (typeof options === "undefined") { options = {}; }
             var _this = this;
+            _super.call(this);
             this.couldHaveChanged = false;
             this._options = { enabled: false };
             this.rowSelector = '> tbody > tr';
@@ -567,7 +569,6 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             };
             this.options = _.clone(DragAndDropTable.defaultOptions);
             this.table = new DDTTable(table);
-            this.emitter = new EventEmitter();
             this.$rows = this.getRows();
             this.lastValues = this.calculateValues();
 
@@ -603,7 +604,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             this.cacheRowPoints();
 
             shadow.element.appendTo(this.options.shadowContainer);
-            shadow.emitter.on('ddt.position', function (point) {
+            shadow.emitter.on('position', function (point) {
                 return _this.dragged(row, shadow, point);
             });
 
@@ -714,7 +715,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
 
         DragAndDropTable.prototype.emitValues = function (values) {
             if (typeof values === "undefined") { values = this.calculateValues(); }
-            this.emitter.trigger('ddt.order', [values]);
+            this.trigger('reorder', [values]);
 
             this.lastValues = values;
         };
@@ -773,7 +774,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         DragAndDropTable.window = new DDTElement($(window));
         DragAndDropTable.$document = $(document);
         return DragAndDropTable;
-    })();
+    })(EventEmitter);
     exports.DragAndDropTable = DragAndDropTable;
 
     function init(table) {

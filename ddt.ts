@@ -401,7 +401,7 @@ export class DDTPositionableElement extends DDTElement {
 
         var pos = this.element.offset();
 
-        this.emitter.trigger('ddt.position', [new DDTPoint(pos.left, pos.top)]);
+        this.emitter.trigger('position', [new DDTPoint(pos.left, pos.top)]);
     }
 }
 
@@ -493,9 +493,7 @@ export interface DragAndDropTableOptions {
     containment     ?: Element;
 }
 
-export class DragAndDropTable {
-
-    public emitter : EventEmitter;
+export class DragAndDropTable extends EventEmitter {
     public options : DragAndDropTableOptions;
 
     public static defaultOptions : DragAndDropTableOptions = {
@@ -526,9 +524,9 @@ export class DragAndDropTable {
     } = {};
 
     constructor(table : JQuery, options : DragAndDropTableOptions = {}) {
+        super();
         this.options    = _.clone(DragAndDropTable.defaultOptions);
         this.table      = new DDTTable(table);
-        this.emitter    = new EventEmitter();
         this.$rows      = this.getRows();
         this.lastValues = this.calculateValues();
 
@@ -564,7 +562,7 @@ export class DragAndDropTable {
         this.cacheRowPoints();
 
         shadow.element.appendTo(this.options.shadowContainer);
-        shadow.emitter.on('ddt.position', (point : DDTPoint) => this.dragged(row, shadow, point));
+        shadow.emitter.on('position', (point : DDTPoint) => this.dragged(row, shadow, point));
 
         shadow.attachToCursor(
             DragAndDropTable.$document,
@@ -671,7 +669,7 @@ export class DragAndDropTable {
     }
 
     private emitValues(values : any[] = this.calculateValues()) {
-        this.emitter.trigger('ddt.order', [values]);
+        this.trigger('reorder', [values]);
         
         this.lastValues = values;
     }
