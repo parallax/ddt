@@ -19,7 +19,7 @@ $ bower install ddt --save
 
  - [jQuery](http://jquery.com) (Version 1.8.3+)
  - [Lo-Dash](http://lodash.com/) (Version 2.4.1+)
- - [eventEmitter)](https://github.com/Wolfy87/EventEmitter) (Version 4.2.7+)
+ - [eventEmitter](https://github.com/Wolfy87/EventEmitter) (Version 4.2.7+)
  - [RequireJS](http://requirejs.org/)
 
 Although DDT may work with other versions of these libaries, this use is untested and you may run into issues.
@@ -90,7 +90,7 @@ While there may be other symbols accessible to you, these are not documented nor
 
 ```typescript
 export declare function init(table: JQuery): DragAndDropTable;
-``
+```
 
 This is how you apply ddt to a specific table. This returns an instance of the DragAndDrop class and is the only global function that you can use.
 
