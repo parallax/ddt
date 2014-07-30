@@ -3,7 +3,7 @@ ddt - Drag and Drop Tables (v0.5)
 
 DDT (Drag and Drop Tables) is a library that adds drag and drop reordering support to HTML tables. 
 
-**This library does not support any version of IE currently. You can track IE support at #46.**
+**This library does not support any version of IE currently. You can track IE support at [Issue #46](https://github.com/parallax/ddt/issues/46).**
 
 ## Todo
 
