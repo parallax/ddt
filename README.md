@@ -1,4 +1,4 @@
-ddt - Drag and Drop Tables (v0.5)
+ddt - Drag and Drop Tables (v0.6)
 ===
 
 DDT (Drag and Drop Tables) is a library that adds drag and drop reordering support to HTML tables. 
