@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var tsc  = require('gulp-tsc');
 var _    = require('lodash');
+var shell = require('gulp-shell');
 
 var options = {
     module        : 'amd',
@@ -23,3 +24,5 @@ gulp.task('compile', ['compile-test'], function() {
         })))
         .pipe(gulp.dest('.'));
 });
+
+gulp.task('test', shell.task(['./node_modules/karma/bin/karma start']));

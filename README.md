@@ -5,14 +5,19 @@ DDT (Drag and Drop Tables) is a library that adds drag and drop reordering suppo
 
 **This library does not support any version of IE currently. You can track IE support at [Issue #46](https://github.com/parallax/ddt/issues/46).**
 
-## Todo
-
- - Tests
-
 ## Install
 
 ```
 $ bower install ddt --save
+```
+
+## Tests
+
+While most of DDT is not yet covered with tests (see [Issue #40](https://github.com/parallax/ddt/issues/40) for more info), there are some. We use the Karma test runner for these. To run our tests, simply run the following (you'll need gulp).
+
+```
+$ npm install
+$ gulp test
 ```
 
 ## Requirements
@@ -54,22 +59,17 @@ And then just add `data-value` attributes to each of your `<tr>` tags in your HT
 </table>
 ```
 
-## Bindings
-
-**@todo Document these bindings**
-
-Knockout comes with bindings for Knockout and jQuery. Simply include the relevant files to add these. We currently have bindings for the following libraries
-
- - jQuery
- - Knockout
-
 ## Browser Support
 
 DDT aims to support the following browsers completely
 
- - Chrome
- - Firefox
- - Safari
+ - Chrome 18+
+ - Firefox (?)
+ - Safari 6+
+
+We will be supporting IE at some point in the future. Follow this development at  [Issue #46](https://github.com/parallax/ddt/issues/46).
+
+There is currently no support for touch. We plan to investigate supporting touch some time in the future. Follow support for this at [Issue #36](https://github.com/parallax/ddt/issues/36).
 
 ## Contributing
 

@@ -26,6 +26,50 @@ export interface DDTMouseEvent {
 }
 
 /**
+ * Little any key vs any value map
+ */
+export class DDTMap<K,V> {
+    private keys : K[];
+    private values : V[];
+
+    constructor() {
+        this.keys = [];
+        this.values = [];
+    }
+
+    has(key : K) {
+        return this.keys.indexOf(key) > -1;
+    }
+
+    get(key : K) : V {
+        if (!this.has(key)) {
+            throw new Error('Value for key ' + key + ' not found');
+        }
+
+        return this.values[this.keys.indexOf(key)];
+    }
+
+    set(key : K, value : V) : DDTMap<K, V> {
+        if (this.keys.indexOf(key) === -1) {
+            this.keys.push(key);
+        }
+
+        this.values[this.keys.indexOf(key)] = value;
+
+        return this;
+    }
+
+    remove(key : K) : DDTMap<K, V> {
+        if (this.has(key)) {
+            this.values[this.keys.indexOf(key)] = undefined;
+            this.keys[this.keys.indexOf(key)]   = undefined;
+        }
+
+        return this;
+    }
+}
+
+/**
  * A class representing a point which we use across the whole library
  */
 export class DDTPoint {
@@ -99,11 +143,17 @@ export class DDTPoint {
 export class DDTCSS {
 
     static styleElement : HTMLStyleElement;
+    static currentIndexes : DDTMap<HTMLStyleElement, number>;
 
     /**
      * Define a specific selector with some rules for it
      */
     static defineSelector(selectorName : string, rules : Object, newElement : boolean = false) {
+
+        if (!DDTCSS.currentIndexes) {
+            DDTCSS.currentIndexes = new DDTMap<HTMLStyleElement, number>();
+        }
+
         var element : HTMLStyleElement;
 
         if (newElement || !DDTCSS.styleElement) {
@@ -121,8 +171,14 @@ export class DDTCSS {
             DDTCSS.styleElement = element;
         }
 
+        if (!DDTCSS.currentIndexes.has(element)) {
+            DDTCSS.currentIndexes.set(element, 0);
+        }
+
         var sheet = <CSSStyleSheet> element.sheet;
-        sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
+        sheet.insertRule(selectorName + '{ ' + DDTCSS.rulesToCSS(rules) + ' }', DDTCSS.currentIndexes.get(element));
+
+        DDTCSS.currentIndexes.set(element, DDTCSS.currentIndexes.get(element) + 1);
 
         return element;
     }
@@ -154,6 +210,12 @@ export class DDTCSS {
      * @todo Add support for when extra elements are created
      */
     static cleanup = () => {
+        if (DDTCSS.currentIndexes) {
+            DDTCSS.currentIndexes.remove(DDTCSS.styleElement);
+        }
+
+        DDTCSS.currentIndexes = null;
+
         if (DDTCSS.styleElement) {
             DDTCSS.styleElement.parentNode.removeChild(DDTCSS.styleElement);
         }
@@ -732,6 +794,7 @@ export class DragAndDropTable extends EventEmitter {
         DDTCSS.defineClass(DDTElement.shadowTable, { position : 'absolute !important', zIndex: 999999 });
         DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
             WebkitUserSelect : 'none',
+            MozUserSelect    : 'none',
             MsUserSelect     : 'none',
             OUserSelect      : 'none',
             userSelect       : 'none'

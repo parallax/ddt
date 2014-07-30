@@ -33,6 +33,48 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     
 
     /**
+    * Little any key vs any value map
+    */
+    var DDTMap = (function () {
+        function DDTMap() {
+            this.keys = [];
+            this.values = [];
+        }
+        DDTMap.prototype.has = function (key) {
+            return this.keys.indexOf(key) > -1;
+        };
+
+        DDTMap.prototype.get = function (key) {
+            if (!this.has(key)) {
+                throw new Error('Value for key ' + key + ' not found');
+            }
+
+            return this.values[this.keys.indexOf(key)];
+        };
+
+        DDTMap.prototype.set = function (key, value) {
+            if (this.keys.indexOf(key) === -1) {
+                this.keys.push(key);
+            }
+
+            this.values[this.keys.indexOf(key)] = value;
+
+            return this;
+        };
+
+        DDTMap.prototype.remove = function (key) {
+            if (this.has(key)) {
+                this.values[this.keys.indexOf(key)] = undefined;
+                this.keys[this.keys.indexOf(key)] = undefined;
+            }
+
+            return this;
+        };
+        return DDTMap;
+    })();
+    exports.DDTMap = DDTMap;
+
+    /**
     * A class representing a point which we use across the whole library
     */
     var DDTPoint = (function () {
@@ -114,6 +156,10 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         */
         DDTCSS.defineSelector = function (selectorName, rules, newElement) {
             if (typeof newElement === "undefined") { newElement = false; }
+            if (!DDTCSS.currentIndexes) {
+                DDTCSS.currentIndexes = new DDTMap();
+            }
+
             var element;
 
             if (newElement || !DDTCSS.styleElement) {
@@ -132,8 +178,14 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
                 DDTCSS.styleElement = element;
             }
 
+            if (!DDTCSS.currentIndexes.has(element)) {
+                DDTCSS.currentIndexes.set(element, 0);
+            }
+
             var sheet = element.sheet;
-            sheet.addRule(selectorName, DDTCSS.rulesToCSS(rules), 0);
+            sheet.insertRule(selectorName + '{ ' + DDTCSS.rulesToCSS(rules) + ' }', DDTCSS.currentIndexes.get(element));
+
+            DDTCSS.currentIndexes.set(element, DDTCSS.currentIndexes.get(element) + 1);
 
             return element;
         };
@@ -161,6 +213,12 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         };
 
         DDTCSS.cleanup = function () {
+            if (DDTCSS.currentIndexes) {
+                DDTCSS.currentIndexes.remove(DDTCSS.styleElement);
+            }
+
+            DDTCSS.currentIndexes = null;
+
             if (DDTCSS.styleElement) {
                 DDTCSS.styleElement.parentNode.removeChild(DDTCSS.styleElement);
             }
@@ -754,6 +812,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
             DDTCSS.defineClass(DDTElement.shadowTable, { position: 'absolute !important', zIndex: 999999 });
             DDTCSS.defineSelector('.' + DDTElement.noSelect + ', .' + DDTElement.noSelect + ' *', {
                 WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
                 MsUserSelect: 'none',
                 OUserSelect: 'none',
                 userSelect: 'none'
@@ -782,3 +841,4 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     }
     exports.init = init;
 });
+//# sourceMappingURL=ddt.js.map

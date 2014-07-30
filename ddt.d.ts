@@ -23,6 +23,18 @@ export interface DDTMouseEvent {
     pageY: number;
 }
 /**
+* Little any key vs any value map
+*/
+export declare class DDTMap<K, V> {
+    private keys;
+    private values;
+    constructor();
+    public has(key: K): boolean;
+    public get(key: K): V;
+    public set(key: K, value: V): DDTMap<K, V>;
+    public remove(key: K): DDTMap<K, V>;
+}
+/**
 * A class representing a point which we use across the whole library
 */
 export declare class DDTPoint {
@@ -59,6 +71,7 @@ export declare class DDTPoint {
 */
 export declare class DDTCSS {
     static styleElement: HTMLStyleElement;
+    static currentIndexes: DDTMap<HTMLStyleElement, number>;
     /**
     * Define a specific selector with some rules for it
     */
