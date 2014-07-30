@@ -1,8 +1,4 @@
-/**
- * Created by nathaniel on 29/07/2014.
- */
-
-/// <reference path='../typings/tsd.d.ts' />
+/// <reference path='../ddt.d.ts' />
 
 import ddt  = require('../ddt');
 import chai = require('chai');

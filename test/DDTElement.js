@@ -1,3 +1,4 @@
+/// <reference path='../ddt.d.ts' />
 define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt, chai) {
     describe('DDTElement', function () {
         var expect = chai.expect;

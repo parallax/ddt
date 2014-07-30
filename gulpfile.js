@@ -1,35 +1,24 @@
 var gulp = require('gulp');
-var tsc  = require('gulp-typescript-compiler');
+var tsc  = require('gulp-tsc');
+var _    = require('lodash');
 
-var tscOptions = {
-    module       : 'amd',
-    target       : 'ES5',
-    sourcemap    : false,
-    logErrors    : true,
-    comments     : true,
-    resolve      : true
+var options = {
+    module        : 'amd',
+    target        : 'ES5',
+    noImplicitAny : true
 };
 
-gulp.task('tsc-src', function() {
-
-    return gulp.src(['./ddt.ts'])
-        .pipe(tsc(tscOptions))
+gulp.task('compile-test', function() {
+    return gulp.src(['./test/**/*.ts'])
+        .pipe(tsc(options))
         .pipe(gulp.dest('.'));
 });
 
-gulp.task('tsc-test', function() {
-
-    return gulp.src(['./test/**/*.ts'])
-        .pipe(tsc(tscOptions))
-        .pipe(gulp.dest('./test'));
+gulp.task('compile', ['compile-test'], function() {
+    return gulp.src(['./ddt.ts'])
+        .pipe(tsc(_.extend(options, {
+            declaration : true,
+            sourcemap : true
+        })))
+        .pipe(gulp.dest('.'));
 });
-
-gulp.task('tsc', ['tsc-src', 'tsc-test']);
-
-gulp.task('build', ['tsc']);
-
-gulp.task('watch', function() {
-    gulp.watch(['./ddt.ts', './typings/**/*.ts'], ['tsc']);
-});
-
-gulp.task('default', ['tsc']);

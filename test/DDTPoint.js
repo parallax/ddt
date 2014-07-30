@@ -1,6 +1,4 @@
-/**
-* Created by nathaniel on 29/07/2014.
-*/
+/// <reference path='../ddt.d.ts' />
 define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt, chai) {
     describe('DDTPoint', function () {
         var expect = chai.expect;
