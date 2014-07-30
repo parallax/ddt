@@ -65,7 +65,7 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 var obj = new TestObject();
                 var obj2 = new TestObject();
 
-                map.set(obj, 10).set(obj, 5);
+                map.set(obj, 10).set(obj2, 5);
 
                 expect(map.has(obj)).to.equal(true);
                 expect(map.has(obj2)).to.equal(true);
