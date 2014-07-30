@@ -1,4 +1,4 @@
-/// <reference path='./typings/tsd.d.ts' />
+/// <reference path='typings/tsd.d.ts' />
 
 import $            = require('jquery');
 import _            = require('lodash');
@@ -477,11 +477,22 @@ export class DDTShadowTable extends DDTTable {
 }
 
 export interface DragAndDropTableOptions {
+    // Restrict drag and drop movement to the vertical access only
     verticalOnly    ?: boolean;
+
+    // Contain the drag and drop movement to within the table
     bindToTable     ?: boolean;
+
+    // The cursor to change to while dragging
     cursor          ?: string;
+
+    // The attribute to get the value for each row from
     valueAttribute  ?: string;
+
+    // The container to add the fake table row to
     shadowContainer ?: Element;
+
+    // A custom element to contain the drag and drag movement within
     containment     ?: Element;
 }
 
@@ -728,6 +739,6 @@ export class DragAndDropTable extends EventEmitter {
     }
 }
 
-export function init(table : JQuery) : DragAndDropTable {
-    return new DragAndDropTable(table);
+export function init(table : JQuery, options : DragAndDropTableOptions = {}) : DragAndDropTable {
+    return new DragAndDropTable(table, options);
 }

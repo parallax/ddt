@@ -188,4 +188,4 @@ export declare class DragAndDropTable extends EventEmitter {
     private handleScrolling(shadow);
     static createSelectors(): void;
 }
-export declare function init(table: JQuery): DragAndDropTable;
+export declare function init(table: JQuery, options?: DragAndDropTableOptions): DragAndDropTable;

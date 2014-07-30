@@ -18,7 +18,8 @@ gulp.task('compile', ['compile-test'], function() {
     return gulp.src(['./ddt.ts'])
         .pipe(tsc(_.extend(options, {
             declaration : true,
-            sourcemap : true
+            sourcemap   : true,
+            outDir      : '.'
         })))
         .pipe(gulp.dest('.'));
 });

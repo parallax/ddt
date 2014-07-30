@@ -89,7 +89,7 @@ While there may be other symbols accessible to you, these are not documented nor
 ### ddt.init
 
 ```typescript
-export declare function init(table: JQuery): DragAndDropTable;
+export declare function init(table: JQuery, options?: DragAndDropTableOptions): DragAndDropTable;
 ```
 
 This is how you apply ddt to a specific table. This returns an instance of the DragAndDrop class and is the only global function that you can use.
@@ -97,7 +97,49 @@ This is how you apply ddt to a specific table. This returns an instance of the D
 #### Example
 
 ```js
-var table = ddt.init($('table'));
+var table = ddt.init($('table'), {
+    // options
+});
+```
+
+#### Options
+
+```typescript
+export interface DragAndDropTableOptions {
+    // Restrict drag and drop movement to the vertical access only
+    verticalOnly    ?: boolean;
+
+    // Contain the drag and drop movement to within the table
+    bindToTable     ?: boolean;
+
+    // The cursor to change to while dragging
+    cursor          ?: string;
+
+    // The attribute to get the value for each row from
+    valueAttribute  ?: string;
+
+    // The container to add the fake table row to
+    shadowContainer ?: Element;
+
+    // A custom element to contain the drag and drag movement within
+    containment     ?: Element;
+}
+```
+
+#### Defaults
+
+```typescript
+
+export class DragAndDropTable extends EventEmitter {
+    public static defaultOptions : DragAndDropTableOptions = {
+        verticalOnly    : true,
+        containment     : null,
+        bindToTable     : true,
+        shadowContainer : document.body,
+        cursor          : 'default',
+        valueAttribute  : 'data-value'
+    };
+}
 ```
 
 ### DragAndDropTable.on (eventEmitter.on)
@@ -105,7 +147,6 @@ var table = ddt.init($('table'));
 ```typescript
 class EventEmitter {
     on(evt:string, listener:Function):EventEmitter;
-    on(evt:RegExp, listener:Function):EventEmitter;
 }
 ```
 

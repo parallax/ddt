@@ -1,4 +1,4 @@
-/// <reference path='./typings/tsd.d.ts' />
+/// <reference path='typings/tsd.d.ts' />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -776,8 +776,9 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
     })(EventEmitter);
     exports.DragAndDropTable = DragAndDropTable;
 
-    function init(table) {
-        return new DragAndDropTable(table);
+    function init(table, options) {
+        if (typeof options === "undefined") { options = {}; }
+        return new DragAndDropTable(table, options);
     }
     exports.init = init;
 });
