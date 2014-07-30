@@ -20,15 +20,17 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 expect(map.has(new TestObject())).to.equal(false);
 
                 var obj = new TestObject();
+                var obj2 = new TestObject();
 
                 map.set(obj, 5);
 
                 expect(map.has(obj)).to.equal(true);
+                expect(map.has(obj2)).to.equal(false);
             });
         });
 
         describe('#get()', function () {
-            it('should throw error when getting non-existant value', function () {
+            it('should throw error when getting non-existent value', function () {
                 expect(function () {
                     return map.get(new TestObject());
                 }).to.throw(Error, /Value for key.+not found/);
@@ -36,9 +38,12 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
 
             it('should return the correct object', function () {
                 var obj = new TestObject();
+                var obj2 = new TestObject();
                 map.set(obj, 5);
+                map.set(obj2, 10);
 
                 expect(map.get(obj)).to.equal(5);
+                expect(map.get(obj2)).to.equal(10);
             });
         });
 
@@ -52,6 +57,28 @@ define(["require", "exports", '../ddt', 'chai'], function(require, exports, ddt,
                 map.set(obj, 10);
 
                 expect(map.get(obj)).to.equal(10);
+            });
+        });
+
+        describe('#remove()', function () {
+            it('should remove a value', function () {
+                var obj = new TestObject();
+                var obj2 = new TestObject();
+
+                map.set(obj, 10).set(obj, 5);
+
+                expect(map.has(obj)).to.equal(true);
+                expect(map.has(obj2)).to.equal(true);
+
+                map.remove(obj);
+
+                expect(map.has(obj)).to.equal(false);
+                expect(map.has(obj2)).to.equal(true);
+
+                map.remove(obj2);
+
+                expect(map.has(obj)).to.equal(false);
+                expect(map.has(obj2)).to.equal(false);
             });
         });
     });

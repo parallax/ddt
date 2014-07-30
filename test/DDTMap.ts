@@ -20,7 +20,7 @@ describe('DDTMap', function() {
             expect(map.has(new TestObject())).to.equal(false);
 
             var obj = new TestObject();
-            var obj2 = new TestObject();)
+            var obj2 = new TestObject();
 
             map.set(obj, 5);
 
