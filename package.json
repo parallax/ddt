@@ -1,6 +1,6 @@
 {
   "name": "ddt",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "license": "MIT",
   "description": "Table row drag and drop reordering",
   "main": "ddt.js",
