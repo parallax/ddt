@@ -69,7 +69,7 @@ define(['ddt', 'knockout'], function(ddt, ko) {
                     throw new DDTErrorNoDDTBinding();
                 }
 
-                table.emitter.on(eventName, value);
+                table.on(eventName, value);
             }
         }
     });
