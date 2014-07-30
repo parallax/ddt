@@ -156,7 +156,7 @@ This is how you listen for events from the library. Currently the only events we
   - reorder => Triggered when rows are reordered
  ```
 
- #### Example
+#### Example
 
  ```js
  table.on('reorder', function(newOrder) {
