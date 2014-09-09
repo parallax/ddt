@@ -253,7 +253,7 @@ export class DDTElement {
      * Get the offset top of an element from a parent.
      */
     offsetTop()     {
-        if (this.element.is(window)) {
+        if (this.element[0] instanceof Window) {
             return this.element.scrollTop();
         }
 
