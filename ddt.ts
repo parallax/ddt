@@ -252,7 +252,13 @@ export class DDTElement {
     /**
      * Get the offset top of an element from a parent.
      */
-    offsetTop()     { return (this.element.offset() || { top : 0  }).top; }
+    offsetTop()     {
+        if (this.element.is(window)) {
+            return this.element.scrollTop();
+        }
+
+        return (this.element.offset() || { top : 0 }).top;
+    }
 
     show()          { this.element.removeClass(DDTElement.notVisible); }
     hide()          { this.element.addClass(DDTElement.notVisible); }

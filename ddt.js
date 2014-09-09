@@ -250,6 +250,10 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         * Get the offset top of an element from a parent.
         */
         DDTElement.prototype.offsetTop = function () {
+            if (this.element.is(window)) {
+                return this.element.scrollTop();
+            }
+
             return (this.element.offset() || { top: 0 }).top;
         };
 
