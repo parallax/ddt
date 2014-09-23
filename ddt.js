@@ -740,9 +740,18 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
                 var toSwapWith = _this.calculateRowToSwapWith(tr, point, shadow, cachedPoint);
 
                 if (toSwapWith && row.getNode() !== toSwapWith[0]) {
-                    _this.swap(row, new DDTElement(toSwapWith), shadow);
+                    // here be dragons
+                    // something to do with missed events?
+                    // http://cl.ly/Xfo3
+                    var ourIndex = row.element.index();
+                    var theirIndex = toSwapWith.index();
+                    var diff = theirIndex - ourIndex;
+                    var mod = diff < 0 ? -1 : 1;
+                    var rows = row.element.parent().children();
 
-                    return false;
+                    for (var i = 1; i <= (diff * mod); i++) {
+                        _this.swap(row, new DDTElement(rows.eq(ourIndex + (i * mod))), shadow);
+                    }
                 }
             });
         };

@@ -730,9 +730,18 @@ export class DragAndDropTable extends EventEmitter {
             var toSwapWith = this.calculateRowToSwapWith(tr, point, shadow, cachedPoint);
 
             if (toSwapWith && row.getNode() !== toSwapWith[0]) {
-                this.swap(row, new DDTElement(toSwapWith), shadow);
+                // here be dragons
+                // something to do with missed events?
+                // http://cl.ly/Xfo3
+                var ourIndex = row.element.index();
+                var theirIndex = toSwapWith.index();
+                var diff = theirIndex - ourIndex;
+                var mod = diff < 0 ? -1 : 1;
+                var rows = row.element.parent().children();
 
-                return false;
+                for (var i = 1; i <= (diff * mod); i++) {
+                    this.swap(row, new DDTElement(rows.eq(ourIndex + (i * mod))), shadow);
+                }
             }
         });
     }
