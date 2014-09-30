@@ -18,7 +18,6 @@ gulp.task('compile-test', function() {
 gulp.task('compile', ['compile-test'], function() {
     return gulp.src(['./ddt.ts'])
         .pipe(tsc(_.extend(options, {
-            declaration : true,
             sourcemap   : true,
             outDir      : '.'
         })))
