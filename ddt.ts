@@ -117,7 +117,7 @@ export class DDTPoint {
      * Used to calculate if a point is over another point by a certain amount
      */
     isOverAxis(point : DDTPoint, size : number, axis : DDTAxis) {
-        return this.gt(point, axis) && this.lt(point.addToAxis(size, axis), axis);
+        return this.gt(point.addToAxis(-1, axis), axis) && this.lt(point.addToAxis(size, axis), axis);
     }
 
     static fromEvent   = (event   : DDTMouseEvent)   => new DDTPoint(event.pageX, event.pageY);
@@ -695,8 +695,8 @@ export class DragAndDropTable extends EventEmitter {
     }
 
     private dragged(row : DDTRow, shadow : DDTShadowTable, point : DDTPoint) {
-        this.handleScrolling(shadow);
         this.handleRowSwapping(row, shadow, point);
+        this.handleScrolling(shadow);
     }
 
     private endDrag(row : DDTRow, shadow : DDTShadowTable, cssEl : HTMLStyleElement) {
@@ -767,7 +767,7 @@ export class DragAndDropTable extends EventEmitter {
 
     private calculateRowToSwapWith(currentRow : Element, point : DDTPoint, shadow : DDTShadowTable, rowCoords : DDTPoint = DDTPoint.fromElement(currentRow)) {
         var $tr         = $(currentRow);
-        var limits      = shadow.calculateBounds(this.table, 0, null, this.cache.tableOffset);
+        var limits      = shadow.calculateBounds(this.table, 2, null, this.cache.tableOffset);
 
         var toSwapWith : JQuery;
 
@@ -783,19 +783,24 @@ export class DragAndDropTable extends EventEmitter {
     }
 
     private handleScrolling(shadow : DDTShadowTable) {
-        if (shadow.calculateBounds(this.table, shadow.row.element.outerHeight()) !== DDTBounds.IN) {
-            return;
-        }
-
         switch (shadow.calculateBounds(DragAndDropTable.window)) {
             case DDTBounds.HIGH:
-                document.body.scrollTop += 5;
+                this.scrollWebPage(5);
+                this.scrollAgainSoon(shadow);
             break;
 
             case DDTBounds.LOW:
-                document.body.scrollTop -= 5;
+                this.scrollWebPage(-5);
             break;
         }
+    }
+
+    private scrollWebPage(amount : number) {
+        document.body.scrollTop += amount;
+    }
+
+    private scrollAgainSoon(shadow : DDTShadowTable) {
+        setTimeout(() => this.handleScrolling(shadow), 100);
     }
 
     static createSelectors() {

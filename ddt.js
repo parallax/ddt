@@ -118,7 +118,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         * Used to calculate if a point is over another point by a certain amount
         */
         DDTPoint.prototype.isOverAxis = function (point, size, axis) {
-            return this.gt(point, axis) && this.lt(point.addToAxis(size, axis), axis);
+            return this.gt(point.addToAxis(-1, axis), axis) && this.lt(point.addToAxis(size, axis), axis);
         };
 
         DDTPoint.fromJQuery = function (jquery) {
@@ -705,8 +705,8 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         };
 
         DragAndDropTable.prototype.dragged = function (row, shadow, point) {
-            this.handleScrolling(shadow);
             this.handleRowSwapping(row, shadow, point);
+            this.handleScrolling(shadow);
         };
 
         DragAndDropTable.prototype.endDrag = function (row, shadow, cssEl) {
@@ -783,7 +783,7 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         DragAndDropTable.prototype.calculateRowToSwapWith = function (currentRow, point, shadow, rowCoords) {
             if (typeof rowCoords === "undefined") { rowCoords = DDTPoint.fromElement(currentRow); }
             var $tr = $(currentRow);
-            var limits = shadow.calculateBounds(this.table, 0, null, this.cache.tableOffset);
+            var limits = shadow.calculateBounds(this.table, 2, null, this.cache.tableOffset);
 
             var toSwapWith;
 
@@ -799,19 +799,27 @@ define(["require", "exports", 'jquery', 'lodash', 'eventEmitter'], function(requ
         };
 
         DragAndDropTable.prototype.handleScrolling = function (shadow) {
-            if (shadow.calculateBounds(this.table, shadow.row.element.outerHeight()) !== 1 /* IN */) {
-                return;
-            }
-
             switch (shadow.calculateBounds(DragAndDropTable.window)) {
                 case 2 /* HIGH */:
-                    document.body.scrollTop += 5;
+                    this.scrollWebPage(5);
+                    this.scrollAgainSoon(shadow);
                     break;
 
                 case 0 /* LOW */:
-                    document.body.scrollTop -= 5;
+                    this.scrollWebPage(-5);
                     break;
             }
+        };
+
+        DragAndDropTable.prototype.scrollWebPage = function (amount) {
+            document.body.scrollTop += amount;
+        };
+
+        DragAndDropTable.prototype.scrollAgainSoon = function (shadow) {
+            var _this = this;
+            setTimeout(function () {
+                return _this.handleScrolling(shadow);
+            }, 100);
         };
 
         DragAndDropTable.createSelectors = function () {
