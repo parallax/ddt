@@ -1,4 +1,4 @@
-/// <reference path='../ddt.d.ts' />
+/// <reference path='../ddt.ts' />
 
 import ddt = require('../ddt');
 import chai = require('chai');
